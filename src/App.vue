@@ -20,6 +20,17 @@
 </script>
 
 <style>
+
+  .fade-enter,
+  .fade-leave-to {
+    opacity: 0;
+  }
+
+  .fade-enter-active,
+  .fade-leave-active {
+    transition: .25s;
+  }
+
   .btn-group > .btn, .btn-group-vertical > .btn {
     max-height: 34px;
   }
@@ -32,5 +43,8 @@
     height: auto;
     max-width: 48px;
     width: 100%;
+  }
+  table tbody span {
+    display: contents;
   }
 </style>

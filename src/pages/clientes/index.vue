@@ -1,27 +1,27 @@
 <template>
   <div class="page">
-    <div class="container-fluid">
-      <div class="jumbotron jumbotron-fluid bg-primary">
-        <div class="container text-white">
-          <h1 class="display-4">Clientes</h1>
-          <p class="lead">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Praesentium rem est cupiditate in qui exercitationem. Consequuntur eum aut corporis sint eius mollitia voluptate repellendus, ex dolor veritatis id. Voluptates, ipsa.</p>
-        </div>
+    <div class="jumbotron jumbotron-fluid bg-info">
+      <div class="container text-white">
+        <h1 class="display-4">Clientes</h1>
+        <p class="lead">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Praesentium rem est cupiditate in qui exercitationem. Consequuntur eum aut corporis sint eius mollitia voluptate repellendus, ex dolor veritatis id. Voluptates, ipsa.</p>
       </div>
-      <div class="container">
-        <div class="row">
-          <div class="col-12">
-            <div class="table-responsive">
-              <table class="table table-striped table-bordered">
-                <thead>
-                  <tr>
-                    <th scope="col">Nombre</th>
-                    <th scope="col">Cargo</th>
-                    <th scope="col">Cédula</th>
-                    <th scope="col">Código</th>
-                    <th scope="col">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
+    </div>
+    <div class="container">
+      <div class="row">
+        <div class="col-12">
+          <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+              <thead>
+                <tr>
+                  <th scope="col">Nombre</th>
+                  <th scope="col">Cargo</th>
+                  <th scope="col">Cédula</th>
+                  <th scope="col">Código</th>
+                  <th scope="col">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <transition-group name="fade" mode="out-in">
                   <tr v-for="client in clients"
                     :key="client.objectId">
                     <td>{{ client.name }}</td>
@@ -45,9 +45,9 @@
                       </div>
                     </td>
                   </tr>
-                </tbody>
-              </table>
-            </div>
+                </transition-group>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
