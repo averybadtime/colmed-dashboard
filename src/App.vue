@@ -44,7 +44,7 @@
     max-width: 48px;
     width: 100%;
   }
-  table tbody span {
+  table span {
     display: contents;
   }
 </style>

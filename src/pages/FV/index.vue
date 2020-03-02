@@ -10,7 +10,7 @@
       <div class="row">
         <div class="col-12">
           <div class="table-responsive">
-            <table class="table table-striped table-bordered">
+            <table class="table">
               <thead>
                 <tr>
                   <th colspan="4"></th>
@@ -28,10 +28,10 @@
                   <th scope="col">Acciones</th>
                 </tr>
               </thead>
-              <tbody>
-                <transition-group name="fade" mode="out-in">
-                  <tr v-for="user in users"
+              <transition-group name="fade" mode="out-in">
+                <tbody v-for="user in users"
                     :key="user.objectId">
+                  <tr>
                     <td>
                       <small>{{ user.createdAt | date }}</small>
                     </td>
@@ -47,7 +47,9 @@
                           <button type="button" class="btn">
                             <feather type="eye"/>
                           </button>
-                          <button type="button" class="btn">
+                          <button type="button"
+                            class="btn"
+                            v-on:click="edit(user.objectId)">
                             <feather type="edit-3"/>
                           </button>
                           <button type="button"
@@ -59,8 +61,13 @@
                       </div>
                     </td>
                   </tr>
-                </transition-group>
-              </tbody>
+                  <tr v-if="selectedRow == user.objectId">
+                    <td colspan="8">
+                      <edit-fv-form v-model="userToEdit"/>
+                    </td>
+                  </tr>
+                </tbody>
+              </transition-group>
             </table>
           </div>
         </div>
@@ -70,10 +77,28 @@
 </template>
 
 <script>
+  import EditFvForm from "@/components/forms/edit-fv-form"
+  import replies from "@/mixins/replies"
   export default {
+    components: {
+      EditFvForm
+    },
+    mixins: [
+      replies
+    ],
     data() {
       return {
-        users: []
+        users: [],
+        selectedRow: null
+      }
+    },
+    computed: {
+      userToEdit() {
+        if ( this.selectedRow ) {
+          const user = this.users.find(x => x.objectId == this.selectedRow)
+          return Object.assign({}, user)
+        }
+        return {}
       }
     },
     methods: {
@@ -82,16 +107,20 @@
         try {
           const query = this.$parse.createQuery( "User" )
           query.equalTo( "rol", "fv" )
-          query.include("city")
+          query.include( "city" )
           query.descending( "createdAt" )
-          query.limit( this.defaultTableRows || 50)
+          query.limit( this.defaultTableRows || 50 )
           users = await query.find()
         } catch ( ex ) {
-          return console.error(ex)
+          return console.error( ex )
         }
         users.forEach(user => {
           const _user = user.toJSON()
           const { objectId, createdAt, name, city, points } = _user
+          this.getRepliesByUserId( objectId )
+
+          
+
           this.users.push({
             createdAt,
             name,
@@ -101,7 +130,11 @@
           })
         })
       },
-      async destroy(objectId) {
+      async edit( objectId ) {
+        if ( this.selectedRow == objectId ) return this.selectedRow = null
+        this.selectedRow = objectId
+      },
+      async destroy( objectId ) {
         const i = this.users.findIndex(x => x.objectId == objectId)
         const action = confirm(`¿Eliminar usuario "${ this.users[i].name }"?`)
         if ( action ) {
