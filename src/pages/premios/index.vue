@@ -7,6 +7,16 @@
       </div>
     </div>
     <div class="container">
+      <div class="row mb-3">
+        <div class="col-12">
+          <button class="btn btn-info float-right"
+            v-on:click="showCreateRewardForm = !showCreateRewardForm">Nuevo premio</button>
+        </div>
+        <div class="col-12">
+          <create-reward-form v-if="showCreateRewardForm"
+            v-on:new-reward-saved="handleNewRewardSaved"/>
+        </div>
+      </div>
       <div class="row">
         <div class="col-12">
           <div class="table-responsive">
@@ -62,10 +72,15 @@
 </template>
 
 <script>
+  import CreateRewardForm from "@/components/forms/create-reward-form"
   export default {
+    components: {
+      CreateRewardForm
+    },
     data() {
       return {
-        rewards: []
+        rewards: [],
+        showCreateRewardForm: false
       }
     },
     methods: {
@@ -102,6 +117,19 @@
           this.$delete(this.rewards, i)
           console.log("Eliminado con éxito.")
         }
+      },
+      handleNewRewardSaved( savedReward ) {
+        const _savedReward = savedReward.toJSON()
+        const { objectId, name, value, points, active, icon  } = _savedReward
+        this.rewards.push({
+          name,
+          objectId,
+          points,
+          value,
+          active,
+          icon: icon.url
+        })
+        this.showCreateRewardForm = false
       }
     },
     created() {
