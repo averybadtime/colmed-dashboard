@@ -2,7 +2,7 @@
   <div class="page">
     <div class="jumbotron jumbotron-fluid bg-info">
       <div class="container text-white">
-        <h1 class="display-4">Preguntas</h1>
+        <h1 class="display-4 font-weight-bolder">Preguntas</h1>
         <p class="lead">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Praesentium rem est cupiditate in qui exercitationem. Consequuntur eum aut corporis sint eius mollitia voluptate repellendus, ex dolor veritatis id. Voluptates, ipsa.</p>
       </div>
     </div>
