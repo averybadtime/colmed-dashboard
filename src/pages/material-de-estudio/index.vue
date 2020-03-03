@@ -7,6 +7,16 @@
       </div>
     </div>
     <div class="container">
+      <div class="row mb-3">
+        <div class="col-12">
+          <button class="btn btn-info float-right"
+            v-on:click="showCreateMaterialForm = !showCreateMaterialForm">Nuevo material de estudio</button>
+        </div>
+        <div class="col-12">
+          <create-material-form v-if="showCreateMaterialForm"
+            v-on:new-material-saved="handleNewMaterialSaved"/>
+        </div>
+      </div>
       <div class="row">
         <div class="col-12">
           <div class="table-responsive">
@@ -71,10 +81,15 @@
 </template>
 
 <script>
+  import CreateMaterialForm from "@/components/forms/create-material-form"
   export default {
+    components: {
+      CreateMaterialForm
+    },
     data() {
       return {
-        materials: []
+        materials: [],
+        showCreateMaterialForm: false
       }
     },
     methods: {
@@ -89,8 +104,8 @@
           return console.error(ex)
         }
         materials.forEach(material => {
-          const _question = material.toJSON()
-          const { objectId, createdAt, name, description, active, image, file } = _question
+          const _material = material.toJSON()
+          const { objectId, createdAt, name, description, active, image, file } = _material
           this.materials.push({
             createdAt,
             name,
@@ -110,8 +125,21 @@
           const material = await query.get( objectId )
           await material.destroy({ useMasterKey: true })
           this.$delete( this.materials, i )
-          console.log("Eliminado con éxito.")
         }
+      },
+      handleNewMaterialSaved( savedMaterial ) {
+        const _savedMaterial = savedMaterial.toJSON()
+        const { objectId, createdAt, name, description, active, image, file } = _savedMaterial
+        this.materials.push({
+          createdAt,
+          name,
+          objectId,
+          description,
+          active,
+          imageURL: image.url,
+          fileURL: file.url
+        })
+        this.showCreateMaterialForm = false
       }
     },
     created() {

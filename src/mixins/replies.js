@@ -8,9 +8,6 @@ export default {
     async getRepliesByUserId( userId ) {
       let replies
       try {
-
-        
-          console.log("Trying to...")
         
           const query = this.$parse.createQuery( "Reply" )
 

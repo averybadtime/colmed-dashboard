@@ -119,7 +119,7 @@
           const { objectId, createdAt, name, city, points } = _user
           this.getRepliesByUserId( objectId )
 
-          
+
 
           this.users.push({
             createdAt,
@@ -142,7 +142,6 @@
           const user = await query.get(objectId)
           await user.destroy({ useMasterKey: true })
           this.$delete(this.users, i)
-          console.log("Eliminado con éxito.")
         }
       }
     },
