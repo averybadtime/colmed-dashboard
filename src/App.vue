@@ -35,9 +35,8 @@
     max-height: 34px;
   }
   .feather {
-    height: auto;
-    max-width: 16px;
-    width: 100%;
+    height: 16px;
+    width: 16px;
   }
   .avatar.avatar-48 {
     height: auto;
