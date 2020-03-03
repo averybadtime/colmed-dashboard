@@ -46,7 +46,7 @@
                       <small>{{ user.createdAt | date }}</small>
                     </td>
                     <td>{{ user.name }}</td>
-                    <td>{{ user.city }}</td>
+                    <td>{{ user.city.name }}</td>
                     <td>{{ user.points }}</td>
                     <td>{{ user.points }}</td>
                     <td>{{ user.points }}</td>
@@ -73,7 +73,7 @@
                   </tr>
                   <tr v-if="selectedRow == user.objectId">
                     <td colspan="8">
-                      <edit-fv-form v-model="userToEdit"/>
+                      <edit-fv-form :user-to-edit="userToEdit"/>
                     </td>
                   </tr>
                 </tbody>
@@ -129,15 +129,14 @@
         users.forEach(user => {
           const _user = user.toJSON()
           const { objectId, createdAt, name, city, points } = _user
-          // this.getRepliesByUserId( objectId )
-
-
-
           this.users.push({
             createdAt,
             name,
             objectId,
-            city: city.name,
+            city: {
+              name: city.name,
+              id  : city.objectId
+            },
             points
           })
         })
@@ -163,7 +162,10 @@
           createdAt,
           name,
           objectId,
-          city: city.name,
+          city: {
+            name: city.name,
+            id  : city.objectId
+          },
           points
         })
       }
