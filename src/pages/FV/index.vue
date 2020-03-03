@@ -7,6 +7,16 @@
       </div>
     </div>
     <div class="container">
+      <div class="row mb-3">
+        <div class="col-12">
+          <button class="btn btn-info float-right"
+            v-on:click="showCreateFVForm = !showCreateFVForm">Nuevo material de estudio</button>
+        </div>
+        <div class="col-12">
+          <create-fv-form v-if="showCreateFVForm"
+            v-on:new-fv-saved="handleNewFVSaved"/>
+        </div>
+      </div>
       <div class="row">
         <div class="col-12">
           <div class="table-responsive">
@@ -77,11 +87,13 @@
 </template>
 
 <script>
+  import CreateFvForm from "@/components/forms/create-fv-form"
   import EditFvForm from "@/components/forms/edit-fv-form"
   import replies from "@/mixins/replies"
   export default {
     components: {
-      EditFvForm
+      EditFvForm,
+      CreateFvForm
     },
     mixins: [
       replies
@@ -89,7 +101,8 @@
     data() {
       return {
         users: [],
-        selectedRow: null
+        selectedRow: null,
+        showCreateFVForm: false
       }
     },
     computed: {
@@ -109,7 +122,6 @@
           query.equalTo( "rol", "fv" )
           query.include( "city" )
           query.descending( "createdAt" )
-          query.limit( this.defaultTableRows || 50 )
           users = await query.find()
         } catch ( ex ) {
           return console.error( ex )
@@ -117,7 +129,7 @@
         users.forEach(user => {
           const _user = user.toJSON()
           const { objectId, createdAt, name, city, points } = _user
-          this.getRepliesByUserId( objectId )
+          // this.getRepliesByUserId( objectId )
 
 
 
@@ -143,6 +155,17 @@
           await user.destroy({ useMasterKey: true })
           this.$delete(this.users, i)
         }
+      },
+      handleNewFVSaved( savedFV ) {
+        const _savedFV = savedFV.toJSON()
+        const { objectId, createdAt, name, city, points } = _savedFV
+        this.users.push({
+          createdAt,
+          name,
+          objectId,
+          city: city.name,
+          points
+        })
       }
     },
     created() {
