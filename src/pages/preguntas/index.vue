@@ -7,6 +7,16 @@
       </div>
     </div>
     <div class="container">
+      <div class="row mb-3">
+        <div class="col-12">
+          <button class="btn btn-info float-right"
+            v-on:click="showCreateQuestionForm = !showCreateQuestionForm">Nueva pregunta</button>
+        </div>
+        <div class="col-12">
+          <create-question-form v-if="showCreateQuestionForm"
+            v-on:new-question-saved="handleNewQuestionForm"/>
+        </div>
+      </div>
       <div class="row">
         <div class="col-12">
           <div class="table-responsive">
@@ -56,15 +66,19 @@
         </div>
       </div>
     </div>
-    
   </div>
 </template>
 
 <script>
+  import CreateQuestionForm from "@/components/forms/create-question-form"
   export default {
+    components: {
+      CreateQuestionForm
+    },
     data() {
       return {
-        questions: []
+        questions: [],
+        showCreateQuestionForm: false
       }
     },
     methods: {
@@ -102,6 +116,16 @@
           this.$delete(this.questions, i)
           console.log("Eliminado con éxito.")
         }
+      },
+      handleNewQuestionForm( savedQuestion ) {
+        const _savedQuestion = savedQuestion.toJSON()
+        const { objectId, createdAt, text, active  } = _savedQuestion
+        this.questions.push({
+          createdAt,
+          text,
+          objectId,
+          active
+        })
       }
     },
     created() {
