@@ -112,8 +112,8 @@
             objectId,
             description,
             active,
-            imageURL: image.url,
-            fileURL: file.url
+            imageURL: image ? image.url : null,
+            fileURL: file ? file.url : null
           })
         })
       },
@@ -136,8 +136,8 @@
           objectId,
           description,
           active,
-          imageURL: image.url,
-          fileURL: file.url
+          imageURL: image ? image.url : null,
+          fileURL: file ? file.url : null
         })
         this.showCreateMaterialForm = false
       }
