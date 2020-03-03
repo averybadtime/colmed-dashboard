@@ -7,6 +7,16 @@
       </div>
     </div>
     <div class="container">
+      <div class="row mb-3">
+        <div class="col-12">
+          <button class="btn btn-info float-right"
+            v-on:click="showCreateClientForm = !showCreateClientForm">Nuevo cliente</button>
+        </div>
+        <div class="col-12">
+          <create-client-form v-if="showCreateClientForm"
+            v-on:new-client-saved="handleNewClientSaved"/>
+        </div>
+      </div>
       <div class="row">
         <div class="col-12">
           <div class="table-responsive">
@@ -56,10 +66,15 @@
 </template>
 
 <script>
+  import CreateClientForm from "@/components/forms/create-client-form"
   export default {
+    components: {
+      CreateClientForm
+    },
     data() {
       return {
-        clients: []
+        clients: [],
+        showCreateClientForm: false
       }
     },
     methods: {
@@ -95,6 +110,17 @@
           this.$delete(this.clients, i)
           console.log("Eliminado con éxito.")
         }
+      },
+      handleNewClientSaved( savedClient ) {
+        const _savedClient = savedClient.toJSON()
+        const { objectId, name, position, document, code } = _savedClient
+        this.clients.push({
+          name,
+          objectId,
+          position,
+          document,
+          code
+        })
       }
     },
     created() {
