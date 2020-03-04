@@ -98,7 +98,6 @@
         try {
           const query = this.$parse.createQuery( "StudyMaterial" )
           query.descending( "createdAt" )
-          query.limit( this.defaultTableRows || 50)
           materials = await query.find()
         } catch ( ex ) {
           return console.error(ex)

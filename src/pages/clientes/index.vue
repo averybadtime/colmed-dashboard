@@ -83,7 +83,6 @@
         try {
           const query = this.$parse.createQuery( "Client" )
           query.descending( "createdAt" )
-          query.limit( this.defaultTableRows || 50)
           clients = await query.find()
         } catch ( ex ) {
           return console.error(ex)

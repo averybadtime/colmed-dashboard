@@ -89,7 +89,6 @@
         try {
           const query = this.$parse.createQuery( "Award" )
           query.descending( "createdAt" )
-          query.limit( this.defaultTableRows || 50)
           rewards = await query.find()
         } catch ( ex ) {
           return console.error(ex)

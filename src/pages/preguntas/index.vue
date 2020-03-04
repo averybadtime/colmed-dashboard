@@ -87,7 +87,6 @@
         try {
           const query = this.$parse.createQuery( "Question" )
           query.descending( "createdAt" )
-          query.limit( this.defaultTableRows || 50)
           questions = await query.find()
         } catch ( ex ) {
           return console.error(ex)
