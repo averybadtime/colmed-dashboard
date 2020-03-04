@@ -10,7 +10,7 @@
       <div class="row mb-3">
         <div class="col-12">
           <button class="btn btn-info float-right"
-            v-on:click="showCreateFVForm = !showCreateFVForm">Nuevo material de estudio</button>
+            v-on:click="showCreateFVForm = !showCreateFVForm">Nuevo usuario</button>
         </div>
         <div class="col-12">
           <create-fv-form v-if="showCreateFVForm"
