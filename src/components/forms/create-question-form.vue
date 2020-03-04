@@ -79,6 +79,7 @@
     <hr class="my-4">
   </form>
 </template>
+
 <script>
   export default {
     data() {
@@ -97,7 +98,7 @@
           points && points.toString().trim() != "" &&
           active != undefined &&
           answers && answers.length > 0 &&
-          rightAnswer && text.toString().trim() != ""
+          rightAnswer != undefined && text.toString().trim() != ""
         ) {
           try {
             const Question = this.$parse.createObject( "Question" )
@@ -114,7 +115,7 @@
               answerInstance.set( "valid", index == rightAnswer ? true : false )
               await answerInstance.save()
             })
-            alert("Nuevo cliente guardado con éxito.")
+            alert("Nueva pregunta guardada con éxito.")
             this.$emit( "new-question-saved", savedQuestion )
             this.question = {
               answers: []
