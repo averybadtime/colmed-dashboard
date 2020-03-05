@@ -73,7 +73,7 @@
                   </tr>
                   <tr v-if="selectedRow == user.objectId">
                     <td colspan="8">
-                      <edit-fv-form :user-to-edit="userToEdit"/>
+                      <edit-fv-form :user-to-edit="userToEdit" v-on:fv-updated="handleFVUpdated"/>
                     </td>
                   </tr>
                 </tbody>
@@ -134,8 +134,8 @@
             name,
             objectId,
             city: {
-              name: city.name,
-              id  : city.objectId
+              name: city ? city.name : _user.username,
+              id  : city ? city.objectId : "No objectID"
             },
             points
           })
@@ -168,6 +168,26 @@
           },
           points
         })
+      },
+      handleFVUpdated( updatedFV ) {
+        const _updatedFV = updatedFV.toJSON()
+        const { objectId, createdAt, name, city, points } = _updatedFV
+        
+        const index = this.users.findIndex( x => x.objectId == objectId )
+
+        if ( index > -1 ) {
+          this.$set( this.users, index, {
+            createdAt,
+            name,
+            objectId,
+            city: {
+              name: city.name,
+              id  : city.objectId
+            },
+            points
+          })
+        }
+        this.selectedRow = null
       }
     },
     created() {

@@ -17,52 +17,15 @@
           <select name="city"
             id="city"
             class="form-control"
-            v-model="user.city">
+            v-model="user.city.id">
             <option :value="null" disabled>---Seleccione ciudad ---</option>
             <option v-for="city in cities"
-              :key="city.objectId">
+              :key="city.objectId"
+              :value="city.objectId">
               {{ city.name }}
             </option>
           </select>
         </div>
-      </div>
-      <div class="col-12 col-md-3">
-        <div class="form-group">
-          <label for="points">Puntos</label>
-          <input type="number"
-            name="points"
-            id="points"
-            class="form-control"
-            :value="user.points"
-            readonly>
-        </div>
-      </div>
-      <div class="col-12 col-md-3">
-        <label for="resolved">Preguntas resueltas</label>
-        <input type="number"
-          name="resolved"
-          id="resolved"
-          class="form-control"
-          :value="user.resolved"
-          readonly>
-      </div>
-      <div class="col-12 col-md-3">
-        <label for="wins">Preguntas acertadas</label>
-        <input type="number"
-          name="wins"
-          id="wins"
-          class="form-control"
-          :value="user.wins"
-          readonly>
-      </div>
-      <div class="col-12 col-md-3">
-        <label for="losses">Preguntas perdidas</label>
-        <input type="number"
-          name="losses"
-          id="losses"
-          class="form-control"
-          :value="user.losses"
-          readonly>
       </div>
       <div class="col-12">
         <button class="btn btn-primary float-right mb-3">Guardar cambios</button>
@@ -75,28 +38,48 @@
   import cities from "@/mixins/cities"
   export default {
     props: {
-      value: Object
+      userToEdit: Object
     },
     mixins: [
       cities
     ],
-    computed: {
-      user: {
-        get() {
-          return this.value
-        },
-        set(value) {
-          this.$emit("input", value)
-        }
+    data() {
+      return {
+        user: {}
       }
     },
     methods: {
-      update() {
-        console.log("Guardando...")
-        console.log(this.user)
+      async update() {
+        const { objectId, name, city } = this.user
+        if (
+          name && name.trim() != "" &&
+          city.id && city.id.trim() != ""
+        ) {
+          const query = this.$parse.createQuery( "_User" )
+          try {
+            const User = await query.get(objectId)
+            User.set( "name", name )
+
+            const City = this.$parse.createObject( "City" )
+            const cityInstance = new City()
+            cityInstance.set("id", city.id)
+
+            User.set( "city", cityInstance )
+
+            await User.save( null, { useMasterKey: true } )
+            this.$emit( "fv-updated", User )
+          } catch ( ex ) {
+            console.error( ex )
+            return console.error("Ocurrió un error al guardar la información del usuario. Intente nuevamente.")
+          }
+          alert("Información de usuario actualizada con éxito.")
+        } else {
+          alert("Asegúrese de rellenar todos los campos.")
+        }
       }
     },
     created() {
+      Object.assign( this.user, this.userToEdit )
       this.getCities()
     }
   }

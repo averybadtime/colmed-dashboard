@@ -1,20 +1,23 @@
 import Vue from "vue"
 import VueRouter from "vue-router"
-
 import Parse from "parse"
-
 import Login from "@/pages/auth/Login"
 import FV from "@/pages/FV/"
 import MaterialDeEstudio from "@/pages/material-de-estudio/"
 import Preguntas from "@/pages/preguntas/"
 import Premios from "@/pages/premios/"
 import Clientes from "@/pages/clientes/"
+import BatchImporting from "@/pages/batch-importing"
 
 Vue.use(VueRouter)
 
 const router = new VueRouter({
   mode: "history",
   routes: [{
+    path: "/batch-importing",
+    component: BatchImporting,
+    meta: { requiresAuth : true }
+  }, {
     path: "/",
     component: FV,
     meta: {

@@ -31,10 +31,10 @@
                   <th scope="col">Acciones</th>
                 </tr>
               </thead>
-              <tbody>
-                <transition-group name="fade" mode="out-in">
-                  <tr v-for="reward in rewards"
-                    :key="reward.objectId">
+              <transition-group name="fade" mode="out-in">
+                <tbody v-for="reward in rewards"
+                  :key="reward.objectId">
+                  <tr>
                     <td>
                       <img :src="reward.icon"
                         alt="Reward icon"
@@ -50,7 +50,8 @@
                           <button type="button" class="btn">
                             <feather type="eye"/>
                           </button>
-                          <button type="button" class="btn">
+                          <button type="button" class="btn"
+                            v-on:click="edit(reward.objectId)">
                             <feather type="edit-3"/>
                           </button>
                           <button type="button" class="btn btn-danger"
@@ -61,8 +62,14 @@
                       </div>
                     </td>
                   </tr>
-                </transition-group>
-              </tbody>
+                  <tr v-if="selectedRow == reward.objectId">
+                    <td colspan="8">
+                      <edit-reward-form :reward-to-edit="rewardToEdit"
+                        v-on:reward-updated="handleRewardUpdated"/>
+                    </td>
+                  </tr>
+                </tbody>
+              </transition-group>
             </table>
           </div>
         </div>
@@ -73,14 +80,26 @@
 
 <script>
   import CreateRewardForm from "@/components/forms/create-reward-form"
+  import EditRewardForm from "@/components/forms/edit-reward-form"
   export default {
     components: {
-      CreateRewardForm
+      CreateRewardForm,
+      EditRewardForm
     },
     data() {
       return {
         rewards: [],
+        selectedRow: null,
         showCreateRewardForm: false
+      }
+    },
+    computed: {
+      rewardToEdit() {
+        if ( this.selectedRow ) {
+          const reward = this.rewards.find(x => x.objectId == this.selectedRow)
+          return Object.assign({}, reward)
+        }
+        return {}
       }
     },
     methods: {
@@ -106,6 +125,10 @@
           })
         })
       },
+      async edit( objectId ) {
+        if ( this.selectedRow == objectId ) return this.selectedRow = null
+        this.selectedRow = objectId
+      },
       async destroy(objectId) {
         const i = this.rewards.findIndex(x => x.objectId == objectId)
         const action = confirm(`¿Eliminar premio "${ this.rewards[i].name }"?`)
@@ -129,6 +152,20 @@
           icon: icon.url
         })
         this.showCreateRewardForm = false
+      },
+      handleRewardUpdated( updatedReward ) {
+        const _updatedReward = updatedReward.toJSON()
+        const { objectId, name, value, points, active, icon  } = _updatedReward
+        const index = this.rewards.findIndex(x => x.objectId == _updatedReward.objectId)
+        this.$set(this.rewards, index, {
+          name,
+          objectId,
+          points,
+          value,
+          active,
+          icon: icon.url
+        })
+        this.selectedRow = null
       }
     },
     created() {

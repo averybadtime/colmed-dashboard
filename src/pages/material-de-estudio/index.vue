@@ -32,17 +32,18 @@
                   <th scope="col">Acciones</th>
                 </tr>
               </thead>
-              <tbody>
-                <transition-group name="fade" mode="out-in">
-                  <tr v-for="material in materials"
-                    :key="material.objectId">
+              <transition-group name="fade" mode="out-in">
+                <tbody v-for="material in materials"
+                  :key="material.objectId">
+                  <tr>
                     <td>
                       <small>{{ material.createdAt | date }}</small>
                     </td>
                     <td>
                       <img :src="material.imageURL"
                         class="avatar avatar-48"
-                        alt="Preview">
+                        alt="Preview"
+                        v-if="material.imageURL">
                     </td>
                     <td>{{ material.name }}</td>
                     <td>{{ material.description }}</td>
@@ -59,7 +60,8 @@
                           <button type="button" class="btn">
                             <feather type="eye"/>
                           </button>
-                          <button type="button" class="btn">
+                          <button type="button" class="btn"
+                            v-on:click="edit(material.objectId)">
                             <feather type="edit-3"/>
                           </button>
                           <button type="button" class="btn btn-danger"
@@ -70,8 +72,14 @@
                       </div>
                     </td>
                   </tr>
-                </transition-group>
-              </tbody>
+                  <tr v-if="selectedRow == material.objectId">
+                    <td colspan="8">
+                      <edit-material-form :material-to-edit="materialToEdit"
+                        v-on:material-updated="handleMaterialUpdated"/>
+                    </td>
+                  </tr>
+                </tbody>
+              </transition-group>
             </table>
           </div>
         </div>
@@ -82,14 +90,26 @@
 
 <script>
   import CreateMaterialForm from "@/components/forms/create-material-form"
+  import EditMaterialForm from "@/components/forms/edit-material-form"
   export default {
     components: {
-      CreateMaterialForm
+      CreateMaterialForm,
+      EditMaterialForm
     },
     data() {
       return {
         materials: [],
+        selectedRow: null,
         showCreateMaterialForm: false
+      }
+    },
+    computed: {
+      materialToEdit() {
+        if ( this.selectedRow ) {
+          const material = this.materials.find(x => x.objectId == this.selectedRow)
+          return Object.assign({}, material)
+        }
+        return {}
       }
     },
     methods: {
@@ -116,6 +136,10 @@
           })
         })
       },
+      async edit( objectId ) {
+        if ( this.selectedRow == objectId ) return this.selectedRow = null
+        this.selectedRow = objectId
+      },
       async destroy(objectId) {
         const i = this.materials.findIndex(x => x.objectId == objectId)
         const action = confirm(`¿Eliminar material "${ this.materials[i].name }"?`)
@@ -139,6 +163,21 @@
           fileURL: file ? file.url : null
         })
         this.showCreateMaterialForm = false
+      },
+      handleMaterialUpdated( updatedMaterial ) {
+        const _updatedMaterial = updatedMaterial.toJSON()
+        const { objectId, createdAt, name, description, active, image, file } = _updatedMaterial
+        const index = this.materials.findIndex(x => x.objectId == _updatedMaterial.objectId)
+        this.$set(this.materials, index, {
+          createdAt,
+          name,
+          objectId,
+          description,
+          active,
+          imageURL: image ? image.url : null,
+          fileURL: file ? file.url : null
+        })
+        this.selectedRow = null
       }
     },
     created() {
