@@ -30,10 +30,10 @@
                   <th scope="col">Acciones</th>
                 </tr>
               </thead>
-              <tbody>
-                <transition-group name="fade" mode="out-in">
-                  <tr v-for="client in clients"
-                    :key="client.objectId">
+              <transition-group name="fade" mode="out-in">
+                <tbody v-for="client in clients"
+                  :key="client.objectId">
+                  <tr>
                     <td>{{ client.name }}</td>
                     <td>{{ client.position }}</td>
                     <td>{{ client.document }}</td>
@@ -44,7 +44,8 @@
                           <button type="button" class="btn">
                             <feather type="eye"/>
                           </button>
-                          <button type="button" class="btn">
+                          <button type="button" class="btn"
+                            v-on:click="edit(client.objectId)">
                             <feather type="edit-3"/>
                           </button>
                           <button type="button" class="btn btn-danger"
@@ -55,8 +56,14 @@
                       </div>
                     </td>
                   </tr>
-                </transition-group>
-              </tbody>
+                  <tr v-if="selectedRow == client.objectId">
+                    <td colspan="8">
+                      <edit-client-form :client-to-edit="clientToEdit"
+                        v-on:client-updated="handleClientUpdated"/>
+                    </td>
+                  </tr>
+                </tbody>
+              </transition-group>
             </table>
           </div>
         </div>
@@ -67,14 +74,26 @@
 
 <script>
   import CreateClientForm from "@/components/forms/create-client-form"
+  import EditClientForm from "@/components/forms/edit-client-form"
   export default {
     components: {
-      CreateClientForm
+      CreateClientForm,
+      EditClientForm
     },
     data() {
       return {
         clients: [],
+        selectedRow: null,
         showCreateClientForm: false
+      }
+    },
+    computed: {
+      clientToEdit() {
+        if ( this.selectedRow ) {
+          const client = this.clients.find(x => x.objectId == this.selectedRow)
+          return Object.assign({}, client)
+        }
+        return {}
       }
     },
     methods: {
@@ -89,15 +108,21 @@
         }
         clients.forEach(client => {
           const _client = client.toJSON()
-          const { objectId, name, position, document, code } = _client
+          const { objectId, name, position, document, code, company, email } = _client
           this.clients.push({
             name,
             objectId,
             position,
             document,
-            code
+            code,
+            company,
+            email
           })
         })
+      },
+      async edit( objectId ) {
+        if ( this.selectedRow == objectId ) return this.selectedRow = null
+        this.selectedRow = objectId
       },
       async destroy(objectId) {
         const i = this.clients.findIndex(x => x.objectId == objectId)
@@ -112,14 +137,33 @@
       },
       handleNewClientSaved( savedClient ) {
         const _savedClient = savedClient.toJSON()
-        const { objectId, name, position, document, code } = _savedClient
+        const { objectId, name, position, document, code, company, email } = _savedClient
         this.clients.push({
           name,
           objectId,
           position,
           document,
-          code
+          code,
+          company,
+          email
         })
+      },
+      handleClientUpdated( updatedClient ) {
+        const _updatedClient = updatedClient.toJSON()
+        const { objectId, name, position, document, code, company, email } = _updatedClient
+        const index = this.clients.findIndex( x => x.objectId == objectId )
+        if ( index > -1 ) {
+          this.$set( this.clients, index, {
+            name,
+            objectId,
+            position,
+            document,
+            code,
+            company,
+            email
+          })
+        }
+        this.selectedRow = null
       }
     },
     created() {
