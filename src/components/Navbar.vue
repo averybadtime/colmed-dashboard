@@ -1,5 +1,5 @@
 <template>
-  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <button class="navbar-toggler"
       type="button"
       data-toggle="collapse"
@@ -23,7 +23,7 @@
     </div>
     <form class="form-inline my-2 my-lg-0"
       v-on:submit.prevent="signOut">
-      <button class="btn btn-link my-2 my-sm-0"
+      <button class="btn btn-outline-info text-white my-2 my-sm-0"
         type="submit">
         Cerrar sesión
       </button>
