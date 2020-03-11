@@ -26,6 +26,7 @@
                   <th colspan="4"></th>
                   <th colspan="3" class="text-center">Preguntas</th>
                   <th></th>
+                  <th></th>
                 </tr>
                 <tr>
                   <th scope="col">Fecha</th>
@@ -33,8 +34,9 @@
                   <th scope="col">Ciudad</th>
                   <th scope="col">Puntos</th>
                   <th scope="col">Resueltas</th>
-                  <th scope="col">Acertadas</th>
-                  <th scope="col">Perdidas</th>
+                  <th scope="col" class="text-success">Acertadas</th>
+                  <th scope="col" class="text-danger">Perdidas</th>
+                  <th scope="col" class="text-info">Recompensas</th>
                   <th scope="col">Acciones</th>
                 </tr>
               </thead>
@@ -48,9 +50,10 @@
                     <td>{{ user.name }}</td>
                     <td>{{ user.city.name }}</td>
                     <td>{{ user.points }}</td>
-                    <td>{{ user.points }}</td>
-                    <td>{{ user.points }}</td>
-                    <td>{{ user.points }}</td>
+                    <td>{{ user.total > 0 ? user.total : "--" }}</td>
+                    <td>{{ user.wins > 0 ? user.wins : "--" }}</td>
+                    <td>{{ user.losses > 0 ? user.losses : "--" }}</td>
+                    <td>{{ user.claims > 0 ? user.claims : "--" }}</td>
                     <td>
                       <div class="btn-toolbar" role="toolbar">
                         <div class="btn-group" role="group">
@@ -123,9 +126,36 @@
         } catch ( ex ) {
           return console.error( ex )
         }
-        users.forEach(user => {
+        users.forEach(async user => {
           const _user = user.toJSON()
           const { objectId, createdAt, name, city, points } = _user
+
+          // User Parse Object
+          const User         = this.$parse.createObject( "User" )
+          const UserInstance = new User()
+          UserInstance.set( "objectId", objectId )
+
+          // Recompensas
+          const ClaimsQuery  = this.$parse.createQuery( "Claims" )
+          ClaimsQuery.equalTo( "user", UserInstance )
+          const _claims = await ClaimsQuery.count()
+
+          // Respuestas
+          const RepliesQuery = this.$parse.createQuery( "Reply" )
+          RepliesQuery.equalTo( "user", UserInstance )
+          const _replies = await RepliesQuery.find()
+          
+          let wins = 0
+          let losses = 0
+          _replies.forEach( reply => {
+            const _reply = reply.toJSON()
+
+            if ( _reply.valid ) wins++
+            else losses++
+
+          } )
+          
+
           this.users.push({
             createdAt,
             name,
@@ -134,7 +164,11 @@
               name: city ? city.name : _user.username,
               id  : city ? city.objectId : "No objectID"
             },
-            points
+            points,
+            claims: _claims,
+            total: _replies.length,
+            wins,
+            losses
           })
         })
       },
