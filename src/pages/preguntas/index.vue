@@ -25,6 +25,7 @@
                 <tr>
                   <th scope="col">Fecha</th>
                   <th scope="col">Pregunta</th>
+                  <th scope="col" class="text-success">Puntos</th>
                   <th scope="col">Respuestas</th>
                   <th scope="col">Estado</th>
                   <th scope="col">Acciones</th>
@@ -38,6 +39,7 @@
                       <small>{{ question.createdAt | date }}</small>
                     </td>
                     <td>{{ question.text }}</td>
+                    <td>{{ question.points }}</td>
                     <td>
                       <a href="javascript:void(0)">Ver respuestas</a>
                     </td>
@@ -90,12 +92,13 @@
         }
         questions.forEach(question => {
           const _question = question.toJSON()
-          const { objectId, createdAt, text, active  } = _question
+          const { objectId, createdAt, text, active, points  } = _question
           this.questions.push({
             createdAt,
             text,
             objectId,
-            active
+            active,
+            points
           })
         })
       },
@@ -115,12 +118,13 @@
       },
       handleNewQuestionForm( savedQuestion ) {
         const _savedQuestion = savedQuestion.toJSON()
-        const { objectId, createdAt, text, active  } = _savedQuestion
+        const { objectId, createdAt, text, active, points  } = _savedQuestion
         this.questions.push({
           createdAt,
           text,
           objectId,
-          active
+          active,
+          points
         })
       }
     },
