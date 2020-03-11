@@ -47,9 +47,6 @@
                     <td>
                       <div class="btn-toolbar" role="toolbar">
                         <div class="btn-group" role="group">
-                          <button type="button" class="btn">
-                            <feather type="eye"/>
-                          </button>
                           <button type="button" class="btn"
                             v-on:click="edit(reward.objectId)">
                             <feather type="edit-3"/>
