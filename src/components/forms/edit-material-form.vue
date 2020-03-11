@@ -1,7 +1,7 @@
 <template>
   <form v-on:submit.prevent="update">
     <div class="row">
-      <div class="col-12">
+      <div class="col-6">
         <div class="form-group">
           <label for="name">Nombre</label>
           <input type="text"
@@ -9,6 +9,19 @@
             id="name"
             class="form-control"
             v-model="material.name">
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="form-group">
+          <label for="active">Estado</label>
+          <select name="active"
+            id="active"
+            class="form-control"
+            v-model="material.active">
+            <option :value="null" disabled>--- Seleccione el estado ---</option>
+            <option :value="true">Activo</option>
+            <option :value="false">Inactivo</option>
+          </select>
         </div>
       </div>
       <div class="col-12">
@@ -63,7 +76,7 @@
     },
     methods: {
       async update() {
-        const { objectId, image, name, description, file } = this.material
+        const { objectId, image, name, description, file, active } = this.material
         if (
           name && name.trim() != "" &&
           description && description.trim() != ""
@@ -73,6 +86,7 @@
             const Material = await query.get( objectId )
             Material.set( "name", name )
             Material.set( "description", description )
+            Material.set( "active", active )
             if ( image && image != this.materialToEdit.image ) Material.set( "image", image )
             if ( file && file != this.materialToEdit.file ) Material.set( "file", file )
             await Material.save()
