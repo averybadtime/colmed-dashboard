@@ -31,23 +31,24 @@
                   <th scope="col">Acciones</th>
                 </tr>
               </thead>
-              <tbody>
-                <transition-group name="fade" mode="out-in">
-                  <tr v-for="question in questions"
-                    :key="question.objectId">
+              <transition-group name="fade" mode="out-in">
+                <tbody v-for="question in questions"
+                  :key="question.objectId">
+                  <tr>
                     <td>
                       <small>{{ question.createdAt | date }}</small>
                     </td>
                     <td>{{ question.text }}</td>
                     <td>{{ question.points }}</td>
                     <td>
-                      <a href="javascript:void(0)">Ver respuestas</a>
+                      <a href="javascript:void(0)">Ver</a>
                     </td>
                     <td>{{ question.active | status }}</td>
                     <td>
                       <div class="btn-toolbar" role="toolbar">
                         <div class="btn-group" role="group">
-                          <button type="button" class="btn">
+                          <button type="button" class="btn"
+                            v-on:click="edit(question.objectId)">
                             <feather type="edit-3"/>
                           </button>
                           <button type="button" class="btn text-danger"
@@ -58,8 +59,14 @@
                       </div>
                     </td>
                   </tr>
-                </transition-group>
-              </tbody>
+                  <tr v-if="selectedRow == question.objectId">
+                    <td colspan="8">
+                      <edit-question-form :question-to-edit="questionToEdit"
+                        v-on:question-updated="handleQuestionUpdated"/>
+                    </td>
+                  </tr>
+                </tbody>
+              </transition-group>
             </table>
           </div>
         </div>
@@ -70,14 +77,26 @@
 
 <script>
   import CreateQuestionForm from "@/components/forms/create-question-form"
+  import EditQuestionForm from "@/components/forms/edit-question-form"
   export default {
     components: {
-      CreateQuestionForm
+      CreateQuestionForm,
+      EditQuestionForm
     },
     data() {
       return {
         questions: [],
+        selectedRow: null,
         showCreateQuestionForm: false
+      }
+    },
+    computed: {
+      questionToEdit() {
+        if ( this.selectedRow ) {
+          const question = this.questions.find(x => x.objectId == this.selectedRow)
+          return Object.assign({}, question)
+        }
+        return {}
       }
     },
     methods: {
@@ -105,6 +124,10 @@
       getAnswers() {
         console.log("Obteniendo respuestas...")
       },
+      async edit( objectId ) {
+        if ( this.selectedRow == objectId ) return this.selectedRow = null
+        this.selectedRow = objectId
+      },
       async destroy(objectId) {
         const i = this.questions.findIndex(x => x.objectId == objectId)
         const action = confirm(`¿Eliminar pregunta "${ this.questions[i].text }"?`)
@@ -126,6 +149,19 @@
           active,
           points
         })
+      },
+      handleQuestionUpdated( updatedQuestion ) {
+        const _updatedQuestion = updatedQuestion.toJSON()
+        const { objectId, createdAt, text, active, points  } = _updatedQuestion
+        const index = this.questions.findIndex(x => x.objectId == _updatedQuestion.objectId)
+        this.$set(this.questions, index, {
+          createdAt,
+          text,
+          objectId,
+          active,
+          points
+        })
+        this.selectedRow = null
       }
     },
     created() {
