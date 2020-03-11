@@ -1,10 +1,12 @@
 <template>
   <div class="container">
-    <div class="row">
+    <div class="row vh_100">
       <div class="col-sm-9 col-md-7 col-lg-5 mx-auto">
         <div class="card card-signin my-5">
           <div class="card-body">
-            <h5 class="card-title text-center text-bold">Colmed</h5>
+            <figure>
+              <img src="~@/assets/logo.svg" alt="Logo" class="main_logo">
+            </figure>
             <form class="form-signin"
               v-on:submit.prevent="signIn">
               <div class="form-group">
@@ -62,3 +64,20 @@
     }
   }
 </script>
+
+<style scoped>
+  figure {
+    margin: 24px 0px 36px;
+    text-align: center;
+  }
+  .main_logo {
+    height: auto;
+    max-width: 180px;
+    width: 100%;
+  }
+  .vh_100 {
+    align-items: center;
+    display: flex;
+    height: 100vh;
+  }
+</style>
