@@ -20,7 +20,7 @@
       <div class="row">
         <div class="col-12">
           <div class="table-responsive">
-            <table class="table table-bordered">
+            <table class="table">
               <thead>
                 <tr>
                   <th colspan="4"></th>
@@ -60,7 +60,7 @@
                             <feather type="edit-3"/>
                           </button>
                           <button type="button"
-                            class="btn btn-danger"
+                            class="btn text-danger"
                             v-on:click="destroy(user.objectId)">
                             <feather type="trash-2"/>
                           </button>

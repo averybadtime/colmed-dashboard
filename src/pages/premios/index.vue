@@ -20,7 +20,7 @@
       <div class="row">
         <div class="col-12">
           <div class="table-responsive">
-            <table class="table table-bordered">
+            <table class="table">
               <thead>
                 <tr>
                   <th scope="col">Preview</th>
@@ -51,7 +51,7 @@
                             v-on:click="edit(reward.objectId)">
                             <feather type="edit-3"/>
                           </button>
-                          <button type="button" class="btn btn-danger"
+                          <button type="button" class="btn text-danger"
                             v-on:click="destroy(reward.objectId)">
                             <feather type="trash-2"/>
                           </button>

@@ -20,7 +20,7 @@
       <div class="row">
         <div class="col-12">
           <div class="table-responsive">
-            <table class="table table-bordered">
+            <table class="table">
               <thead>
                 <tr>
                   <th scope="col">Fecha</th>
@@ -61,7 +61,7 @@
                             v-on:click="edit(material.objectId)">
                             <feather type="edit-3"/>
                           </button>
-                          <button type="button" class="btn btn-danger"
+                          <button type="button" class="btn text-danger"
                             v-on:click="destroy(material.objectId)">
                             <feather type="trash-2"/>
                           </button>
