@@ -30,6 +30,10 @@ import {
   MessageBox
 } from "element-ui"
 
+import lang from "element-ui/lib/locale/lang/es"
+import locale from "element-ui/lib/locale"
+locale.use(lang)
+
 Vue.prototype.$msgbox  = MessageBox
 Vue.prototype.$alert   = MessageBox.alert
 Vue.prototype.$confirm = MessageBox.confirm
