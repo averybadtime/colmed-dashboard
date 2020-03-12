@@ -20,6 +20,10 @@ Vue.use(ParsePlugin)
 import VueFeather from "vue-feather"
 Vue.use(VueFeather)
 
+import VueGoodTable from "vue-good-table"
+import "vue-good-table/dist/vue-good-table.css"
+Vue.use(VueGoodTable)
+
 import Parse from "parse"
 const user = Parse.User.current()
 store.commit("SET_USER", user)
