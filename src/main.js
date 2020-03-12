@@ -3,6 +3,7 @@ import "bootstrap/dist/css/bootstrap.css"
 import "jquery/src/jquery"
 import "popper.js/dist/popper"
 import "bootstrap/dist/js/bootstrap.min.js"
+import "element-ui/lib/theme-chalk/index.css"
 
 import Vue from "vue"
 import App from "./App.vue"
@@ -23,6 +24,17 @@ Vue.use(VueFeather)
 import VueGoodTable from "vue-good-table"
 import "vue-good-table/dist/vue-good-table.css"
 Vue.use(VueGoodTable)
+
+import {
+  Message,
+  MessageBox
+} from "element-ui"
+
+Vue.prototype.$msgbox  = MessageBox
+Vue.prototype.$alert   = MessageBox.alert
+Vue.prototype.$confirm = MessageBox.confirm
+Vue.prototype.$prompt  = MessageBox.prompt
+Vue.prototype.$message = Message
 
 import Parse from "parse"
 const user = Parse.User.current()

@@ -32,8 +32,15 @@ module.exports = {
           'css-loader',
           'sass-loader?indentedSyntax'
         ],
-      },
-      {
+      }, {
+        test: /\.(eot|ttf|woff|woff2)(\?.+)?$/,
+        use: [{
+          loader: "url-loader",
+          options: {
+            limit: 10000
+          }
+        }]
+      }, {
         test: /\.vue$/,
         loader: 'vue-loader',
         options: {

@@ -20,6 +20,12 @@
 </script>
 
 <style>
+  @import url('https://fonts.googleapis.com/css?family=Baloo+Chettan+2:400,600&display=swap');
+
+  html,
+  body {
+    font-family: "Baloo Chettan 2", cursive !important;
+  }
 
   .fade-enter,
   .fade-leave-to {
