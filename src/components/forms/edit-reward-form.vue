@@ -74,6 +74,7 @@
 </template>
 
 <script>
+  import Parse from "parse"
   export default {
     props: {
       rewardToEdit: Object,
