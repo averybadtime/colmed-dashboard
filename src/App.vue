@@ -65,7 +65,9 @@
     max-width: 48px;
     width: 100%;
   }
-  table span {
-    display: contents;
+  @media screen and ( max-width: 600px ) {
+    .el-dialog {
+      width: 90% !important;
+    }
   }
 </style>
