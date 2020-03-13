@@ -42,6 +42,9 @@
     text-transform: uppercase;
     width         : auto;
   }
+  td {
+    cursor: pointer;
+  }
   .fade-enter,
   .fade-leave-to {
     opacity: 0;
