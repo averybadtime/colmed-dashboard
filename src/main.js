@@ -27,7 +27,8 @@ Vue.use(VueGoodTable)
 
 import {
   Message,
-  MessageBox
+  MessageBox,
+  Dialog
 } from "element-ui"
 
 import lang from "element-ui/lib/locale/lang/es"
@@ -39,6 +40,8 @@ Vue.prototype.$alert   = MessageBox.alert
 Vue.prototype.$confirm = MessageBox.confirm
 Vue.prototype.$prompt  = MessageBox.prompt
 Vue.prototype.$message = Message
+
+Vue.use(Dialog)
 
 import Parse from "parse"
 const user = Parse.User.current()

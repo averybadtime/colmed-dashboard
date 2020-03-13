@@ -21,22 +21,35 @@
 
 <style>
   @import url('https://fonts.googleapis.com/css?family=Baloo+Chettan+2:400,600&display=swap');
-
   html,
   body {
     font-family: "Baloo Chettan 2", cursive !important;
   }
-
+  fieldset {
+    border: solid 1px #dadada;
+    border-radius: 4px;
+    padding: 18px;
+  }
+  fieldset + fieldset {
+    margin-top: 18px;
+  }
+  legend {
+    background    : #17a2b8;
+    border-radius : 4px;
+    color         : white;
+    font-size     : 14px;
+    padding       : 0px 12px;
+    text-transform: uppercase;
+    width         : auto;
+  }
   .fade-enter,
   .fade-leave-to {
     opacity: 0;
   }
-
   .fade-enter-active,
   .fade-leave-active {
     transition: .25s;
   }
-
   .btn-group > .btn, .btn-group-vertical > .btn {
     max-height: 34px;
   }
