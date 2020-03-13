@@ -3,72 +3,37 @@
     <div class="jumbotron jumbotron-fluid bg-info">
       <div class="container text-white">
         <h1 class="display-4 font-weight-bolder">Preguntas</h1>
-        <p class="lead">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Praesentium rem est cupiditate in qui exercitationem. Consequuntur eum aut corporis sint eius mollitia voluptate repellendus, ex dolor veritatis id. Voluptates, ipsa.</p>
+        <p class="lead">Listado general de preguntas guardadas en el sistema</p>
       </div>
     </div>
     <div class="container">
       <div class="row mb-3">
         <div class="col-12">
           <button class="btn btn-info float-right"
-            v-on:click="showCreateQuestionForm = !showCreateQuestionForm">Nueva pregunta</button>
-        </div>
-        <div class="col-12">
-          <create-question-form v-if="showCreateQuestionForm"
-            v-on:new-question-saved="handleNewQuestionForm"/>
+            v-on:click="showCreateQuestionForm = true">Nueva pregunta</button>
         </div>
       </div>
       <div class="row">
+        <create-question-form v-show="showCreateQuestionForm"
+          v-model="showCreateQuestionForm"
+          v-on:new-question-saved="handleNewQuestionForm"/>
+        <edit-question-form :question-to-edit="questionToEdit"
+          v-if="showEditQuestionForm"
+          v-on:question-updated="handleQuestionUpdated"
+          v-model="showEditQuestionForm"/>
         <div class="col-12">
-          <div class="table-responsive">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th scope="col">Fecha</th>
-                  <th scope="col">Pregunta</th>
-                  <th scope="col" class="text-success">Puntos</th>
-                  <th scope="col">Respuestas</th>
-                  <th scope="col">Estado</th>
-                  <th scope="col">Acciones</th>
-                </tr>
-              </thead>
-              <transition-group name="fade" mode="out-in">
-                <tbody v-for="question in questions"
-                  :key="question.objectId">
-                  <tr>
-                    <td>
-                      <small>{{ question.createdAt | date }}</small>
-                    </td>
-                    <td>{{ question.text }}</td>
-                    <td>{{ question.points }}</td>
-                    <td>
-                      <a href="javascript:void(0)">Ver</a>
-                    </td>
-                    <td>{{ question.active | status }}</td>
-                    <td>
-                      <div class="btn-toolbar" role="toolbar">
-                        <div class="btn-group" role="group">
-                          <button type="button" class="btn"
-                            v-on:click="edit(question.objectId)">
-                            <feather type="edit-3"/>
-                          </button>
-                          <button type="button" class="btn text-danger"
-                            v-on:click="destroy(question.objectId)">
-                            <feather type="trash-2"/>
-                          </button>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr v-if="selectedRow == question.objectId">
-                    <td colspan="8">
-                      <edit-question-form :question-to-edit="questionToEdit"
-                        v-on:question-updated="handleQuestionUpdated"/>
-                    </td>
-                  </tr>
-                </tbody>
-              </transition-group>
-            </table>
-          </div>
+          <vue-good-table :rows="questions"
+            ref="Questions"
+            styleClass="vgt-table striped condensed"
+            v-on:on-cell-click="handleRowClick"
+            :columns="columns"
+            :pagination-options="paginationOptions"
+            :search-options="searchOptions"
+            :select-options="selectOptions">
+            <div slot="selected-row-actions">
+              <button class="btn btn-danger btn-sm" v-on:click="destroyBatch">Eliminar</button>
+            </div>
+          </vue-good-table>
         </div>
       </div>
     </div>
@@ -78,16 +43,39 @@
 <script>
   import CreateQuestionForm from "@/components/forms/create-question-form"
   import EditQuestionForm from "@/components/forms/edit-question-form"
+  import VueGoodTableProps from "@/mixins/vue-good-table-props"
   export default {
     components: {
       CreateQuestionForm,
       EditQuestionForm
     },
+    mixins: [
+      VueGoodTableProps
+    ],
     data() {
       return {
+        columns: [{
+          label   : "Fecha",
+          field   : "createdAt",
+          formatFn: this.formatDate
+        }, {
+          label: "Pregunta",
+          field: "text"
+        }, {
+          label: "Puntos",
+          field: "points"
+        }, {
+          label: "Respuestas",
+          field: "answersCount"
+        }, {
+          label   : "Estado",
+          field   : "active",
+          formatFn: this.formatStatus
+        }],
         questions: [],
         selectedRow: null,
-        showCreateQuestionForm: false
+        showCreateQuestionForm: false,
+        showEditQuestionForm: false
       }
     },
     computed: {
@@ -107,59 +95,122 @@
           query.descending( "createdAt" )
           questions = await query.find()
         } catch ( ex ) {
-          return console.error(ex)
+          return this.$message({
+            duration: 4000,
+            message : "Ocurrió un error al descargar las preguntas.",
+            type    : "error"
+          })
         }
-        questions.forEach(question => {
+        questions.forEach( async question => {
           const _question = question.toJSON()
           const { objectId, createdAt, text, active, points  } = _question
+          const answersCount = await this.getAnswersCount( objectId )
           this.questions.push({
             createdAt,
             text,
             objectId,
             active,
-            points
+            points,
+            answersCount
           })
-        })
+        } )
       },
-      getAnswers() {
-        console.log("Obteniendo respuestas...")
-      },
-      async edit( objectId ) {
-        if ( this.selectedRow == objectId ) return this.selectedRow = null
-        this.selectedRow = objectId
-      },
-      async destroy(objectId) {
-        const i = this.questions.findIndex(x => x.objectId == objectId)
-        const action = confirm(`¿Eliminar pregunta "${ this.questions[i].text }"?`)
-        if ( action ) {
-          const query = this.$parse.createQuery("Question")
-          const question = await query.get(objectId)
-          await question.destroy({ useMasterKey: true })
-          this.$delete(this.questions, i)
-          console.log("Eliminado con éxito.")
+      async getAnswersCount( questionId ) {
+        try {
+          const AnswerQuery = this.$parse.createQuery( "Answer" )
+          const Question = this.$parse.createObject( "Question" )
+          const QuestionInstance = new Question()
+          QuestionInstance.set( "objectId", questionId )
+          AnswerQuery.equalTo( "question", QuestionInstance )
+          const count = await AnswerQuery.count()
+          return count
+        } catch ( ex ) {
+          return "--"
         }
       },
-      handleNewQuestionForm( savedQuestion ) {
+      async destroy( objectId, batch = false ) {
+        const i = this.questions.findIndex(x => x.objectId == objectId)
+        let action
+        if ( !batch ) {
+          action = await this.$confirm( `¿Eliminar pregunta "${ this.questions[i].text }"?`, "Advertencia", { type: "warning" } )
+        }
+        if ( !action && batch || action ) {
+          const query = this.$parse.createQuery("Question")
+          const question = await query.get(objectId)
+          try {
+            await question.destroy({ useMasterKey: true })
+          } catch ( ex ) {
+            if ( batch ) throw "batch"
+            return this.$message({
+              duration: 4000,
+              message : "Ocurrió un error al eliminar la pregunta.",
+              type    : "error"
+            })
+          }
+          if ( !batch ) {
+            this.$message({
+              duration: 4000,
+              message : "Pregunta eliminada con éxito.",
+              type    : "success"
+            })
+          }
+          this.$delete(this.questions, i)
+        }
+      },
+      async destroyBatch() {
+        const { selectedRows } = this.$refs.Questions
+        try {
+          const action           = await this.$confirm(`¿Eliminar ${selectedRows.length} preguntas?`, "Advertencia", { type: "warning" })
+          if ( action ) {
+            selectedRows.forEach( async row => {
+              await this.destroy( row.objectId, "batch" )
+            } )
+          }
+        } catch ( ex ) {
+          if ( ex == "batch" ) {
+            this.$message({
+              duration: 4000,
+              message : "Ocurrió un error al eliminar las preguntas.",
+              type    : "error"
+            })
+          }
+          return
+        }
+        this.$message({
+          duration: 4000,
+          message : "Preguntas eliminados con éxito.",
+          type    : "success"
+        })
+      },
+      handleRowClick( params ) {
+        this.selectedRow = params.row.objectId
+        this.showEditQuestionForm = true
+      },
+      async handleNewQuestionForm( savedQuestion ) {
         const _savedQuestion = savedQuestion.toJSON()
         const { objectId, createdAt, text, active, points  } = _savedQuestion
+        const answersCount = await this.getAnswersCount( objectId )
         this.questions.push({
           createdAt,
           text,
           objectId,
           active,
-          points
+          points,
+          answersCount
         })
       },
-      handleQuestionUpdated( updatedQuestion ) {
+      async handleQuestionUpdated( updatedQuestion ) {
         const _updatedQuestion = updatedQuestion.toJSON()
         const { objectId, createdAt, text, active, points  } = _updatedQuestion
         const index = this.questions.findIndex(x => x.objectId == _updatedQuestion.objectId)
+        const answersCount = await this.getAnswersCount( objectId )
         this.$set(this.questions, index, {
           createdAt,
           text,
           objectId,
           active,
-          points
+          points,
+          answersCount
         })
         this.selectedRow = null
       }

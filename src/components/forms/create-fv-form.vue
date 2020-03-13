@@ -1,64 +1,68 @@
 <template>
-  <form v-on:submit.prevent="save">
-    <div class="row mb-5">
-      <div class="col-12">
-        <h4>Registrar nuevo usuario</h4>
-      </div>
-      <div class="col-12">
-        <div class="form-group">
-          <label for="name">Nombre</label>
-          <input type="text"
-            placeholder="Nombre del Usuario"
-            name="name"
-            id="name"
-            class="form-control"
-            v-model="user.name">
+  <el-dialog title="Registrar nuevo usuario"
+    width="60%"
+    :visible.sync="visible">
+    <fieldset>
+      <legend>Información básica</legend>
+      <form>
+        <div class="row">
+          <div class="col-12">
+            <div class="form-group">
+              <label for="name">Nombre</label>
+              <input type="text"
+                placeholder="Nombre del Usuario"
+                name="name"
+                id="name"
+                class="form-control"
+                v-model="user.name">
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="form-group">
+              <label for="email">E-mail</label>
+              <input type="email"
+                placeholder="john@doe.com"
+                name="email"
+                id="email"
+                class="form-control"
+                v-model="user.email">
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="form-group">
+              <label for="password">Contraseña</label>
+              <input type="password"
+                placeholder="······"
+                name="password"
+                id="password"
+                class="form-control"
+                v-model="user.password">
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="form-group">
+              <label for="city">Ciudad</label>
+              <select id="city"
+                name="city"
+                class="form-control"
+                v-model="user.city">
+                <option :value="null" disabled>--- Seleccione ciudad ---</option>
+                <option v-for="city in cities"
+                  :key="city.objectId"
+                  :value="city.objectId">
+                  {{ city.name }}
+                </option>
+              </select>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="col-12 col-md-6">
-        <div class="form-group">
-          <label for="email">E-mail</label>
-          <input type="email"
-            placeholder="john@doe.com"
-            name="email"
-            id="email"
-            class="form-control"
-            v-model="user.email">
-        </div>
-      </div>
-      <div class="col-12 col-md-6">
-        <div class="form-group">
-          <label for="password">Contraseña</label>
-          <input type="password"
-            placeholder="······"
-            name="password"
-            id="password"
-            class="form-control"
-            v-model="user.password">
-        </div>
-      </div>
-      <div class="col-12 col-md-6">
-        <div class="form-group">
-          <label for="city">Ciudad</label>
-          <select id="city"
-            name="city"
-            class="form-control"
-            v-model="user.city">
-            <option :value="null" disabled>--- Seleccione ciudad ---</option>
-            <option v-for="city in cities"
-              :key="city.objectId"
-              :value="city.objectId">
-              {{ city.name }}
-            </option>
-          </select>
-        </div>
-      </div>
-      <div class="col-12">
-        <button class="btn btn-info float-right">Guardar nuevo</button>
-      </div>
-    </div>
-    <hr class="my-4">
-  </form>
+      </form>
+    </fieldset>
+    <span slot="footer" class="dialog-footer">
+      <button class="btn" v-on:click="closeDialog">Cancelar</button>
+      <button class="btn btn-info" v-on:click="save">Guardar</button>
+    </span>
+  </el-dialog>
 </template>
 
 <script>
@@ -68,9 +72,22 @@
     mixins: [
       cities
     ],
+    props: {
+      value: Boolean
+    },
     data() {
       return {
         user: {}
+      }
+    },
+    computed: {
+      visible: {
+        get() {
+          return this.value
+        },
+        set( value ) {
+          this.$emit( "input", value )
+        }
       }
     },
     methods: {
@@ -82,28 +99,45 @@
           password && password.trim() != "" &&
           city && city.trim() != ""
         ) {
+          const FV = this.$parse.createObject( "User" )
+          const City = this.$parse.createObject( "City" )
+          const cityInstance = new City()
+          cityInstance.set("id", city)
+          const fvInstance = new FV()
+          fvInstance.set( "name", name )
+          fvInstance.set( "email", email )
+          fvInstance.set( "password", password )
+          fvInstance.set( "username", email )
+          fvInstance.set( "rol", "fv" )
+          fvInstance.set( "city", cityInstance )
+          let savedFV
           try {
-            const FV = this.$parse.createObject( "User" )
-            const City = this.$parse.createObject( "City" )
-            const cityInstance = new City()
-            cityInstance.set("id", city)
-            const fvInstance = new FV()
-            fvInstance.set( "name", name )
-            fvInstance.set( "email", email )
-            fvInstance.set( "password", password )
-            fvInstance.set( "username", email )
-            fvInstance.set( "rol", "fv" )
-            fvInstance.set( "city", cityInstance )
-            const savedFV = await fvInstance.save()
-            alert("Nuevo usuario guardado con éxito.")
-            this.$emit( "new-fv-saved", savedFV )
-            this.user = {}
+            savedFV = await fvInstance.save()
           } catch ( ex ) {
-            alert("Ocurrió un error al guardar nuevo usuario. Intente nuevamente.")
+            return this.$message({
+              duration: 4000,
+              message : "Ocurrió un error al guardar nuevo usuario.",
+              type    : "error"
+            })
           }
+          this.$message({
+            duration: 4000,
+            message : "Nuevo usuario guardado con éxito.",
+            type    : "success"
+          })
+          this.$emit( "new-fv-saved", savedFV )
+          this.user = {}
+          this.closeDialog()
         } else {
-          alert("Asegúrese de rellenar todos los campos.")
+          this.$message({
+            duration: 4000,
+            message : "Asegúrese de rellenar todos los campos.",
+            type    : "error"
+          })
         }
+      },
+      closeDialog() {
+        this.visible = false
       }
     },
     created() {

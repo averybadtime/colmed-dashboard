@@ -3,72 +3,52 @@
     <div class="jumbotron jumbotron-fluid bg-info">
       <div class="container text-white">
         <h1 class="display-4 font-weight-bolder">Premios</h1>
-        <p class="lead">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Praesentium rem est cupiditate in qui exercitationem. Consequuntur eum aut corporis sint eius mollitia voluptate repellendus, ex dolor veritatis id. Voluptates, ipsa.</p>
+        <p class="lead">Listado general de premios</p>
       </div>
     </div>
     <div class="container">
       <div class="row mb-3">
         <div class="col-12">
           <button class="btn btn-info float-right"
-            v-on:click="showCreateRewardForm = !showCreateRewardForm">Nuevo premio</button>
-        </div>
-        <div class="col-12">
-          <create-reward-form v-if="showCreateRewardForm"
-            v-on:new-reward-saved="handleNewRewardSaved"/>
+            v-on:click="showCreateRewardForm = true">Nuevo premio</button>
         </div>
       </div>
       <div class="row">
+        <create-reward-form v-show="showCreateRewardForm"
+          v-model="showCreateRewardForm"
+          v-on:new-reward-saved="handleNewRewardSaved"/>
+        <edit-reward-form :reward-to-edit="rewardToEdit"
+          v-if="showEditRewardForm"
+          v-on:reward-updated="handleRewardUpdated"
+          v-model="showEditRewardForm"/>
         <div class="col-12">
-          <div class="table-responsive">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th scope="col">Preview</th>
-                  <th scope="col">Nombre</th>
-                  <th scope="col">Valor</th>
-                  <th scope="col">Puntos</th>
-                  <th scope="col">Estado</th>
-                  <th scope="col">Acciones</th>
-                </tr>
-              </thead>
-              <transition-group name="fade" mode="out-in">
-                <tbody v-for="reward in rewards"
-                  :key="reward.objectId">
-                  <tr>
-                    <td>
-                      <img :src="reward.icon"
-                        alt="Reward icon"
-                        class="avatar avatar-48">
-                    </td>
-                    <td>{{ reward.name }}</td>
-                    <td>{{ reward.value }}</td>
-                    <td>{{ reward.points }}</td>
-                    <td>{{ reward.active | status }}</td>
-                    <td>
-                      <div class="btn-toolbar" role="toolbar">
-                        <div class="btn-group" role="group">
-                          <button type="button" class="btn"
-                            v-on:click="edit(reward.objectId)">
-                            <feather type="edit-3"/>
-                          </button>
-                          <button type="button" class="btn text-danger"
-                            v-on:click="destroy(reward.objectId)">
-                            <feather type="trash-2"/>
-                          </button>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr v-if="selectedRow == reward.objectId">
-                    <td colspan="8">
-                      <edit-reward-form :reward-to-edit="rewardToEdit"
-                        v-on:reward-updated="handleRewardUpdated"/>
-                    </td>
-                  </tr>
-                </tbody>
-              </transition-group>
-            </table>
-          </div>
+          <vue-good-table :rows="rewards"
+            ref="Rewards"
+            styleClass="vgt-table striped condensed"
+            v-on:on-cell-click="handleRowClick"
+            :columns="columns"
+            :pagination-options="paginationOptions"
+            :search-options="searchOptions"
+            :select-options="selectOptions">
+            <template slot="table-row" slot-scope="props">
+              <span v-if="props.column.field == 'icon'">
+                <a :href="props.row.icon"
+                  target="_blank"
+                  v-if="props.row.icon">
+                  <img :src="props.row.icon"
+                    alt="Imagen de referencia"
+                    class="avatar avatar-48">
+                </a>
+                <span v-else>--</span>
+              </span>
+              <span v-else>
+                {{ props.formattedRow[props.column.field] }}
+              </span>
+            </template>
+            <div slot="selected-row-actions">
+              <button class="btn btn-danger btn-sm" v-on:click="destroyBatch">Eliminar</button>
+            </div>
+          </vue-good-table>
         </div>
       </div>
     </div>
@@ -78,16 +58,42 @@
 <script>
   import CreateRewardForm from "@/components/forms/create-reward-form"
   import EditRewardForm from "@/components/forms/edit-reward-form"
+  import VueGoodTableProps from "@/mixins/vue-good-table-props"
   export default {
     components: {
       CreateRewardForm,
       EditRewardForm
     },
+    mixins: [
+      VueGoodTableProps
+    ],
     data() {
       return {
+        columns: [{
+          label: "Preview",
+          field: "icon"
+        }, {
+          label: "Nombre",
+          field: "name"
+        }, {
+          label: "Valor",
+          field: "value",
+          formatFn: this.formatCurrency,
+          type : "number"
+        }, {
+          label   : "Puntos",
+          field   : "points",
+          type    : "number"
+        }, {
+          label   : "Estado",
+          field   : "active",
+          formatFn: this.formatStatus,
+          sortable: false
+        }],
         rewards: [],
         selectedRow: null,
-        showCreateRewardForm: false
+        showCreateRewardForm: false,
+        showEditRewardForm: false
       }
     },
     computed: {
@@ -107,7 +113,11 @@
           query.descending( "createdAt" )
           rewards = await query.find()
         } catch ( ex ) {
-          return console.error(ex)
+          return this.$message({
+            duration: 4000,
+            message : "Ocurrió un error al descargar los premios.",
+            type    : "error"
+          })
         }
         rewards.forEach(reward => {
           const _reward = reward.toJSON()
@@ -126,16 +136,63 @@
         if ( this.selectedRow == objectId ) return this.selectedRow = null
         this.selectedRow = objectId
       },
-      async destroy(objectId) {
+      async destroy( objectId, batch = false ) {
         const i = this.rewards.findIndex(x => x.objectId == objectId)
-        const action = confirm(`¿Eliminar premio "${ this.rewards[i].name }"?`)
-        if ( action ) {
+        let action
+        if ( !batch ) {
+          action = await this.$confirm( `¿Eliminar premio "${ this.rewards[i].name }"?`, "Advertencia", { type: "warning" } )
+        }
+        if ( !action && batch || action ) {
           const query = this.$parse.createQuery("Award")
           const reward = await query.get(objectId)
-          await reward.destroy({ useMasterKey: true })
+          try {
+            await reward.destroy({ useMasterKey: true })
+          } catch ( ex ) {
+            if ( batch ) throw "batch"
+            return this.$message({
+              duration: 4000,
+              message : "Ocurrió un error al eliminar el premio.",
+              type    : "error"
+            })
+          }
+          if ( !batch ) {
+            this.$message({
+              duration: 4000,
+              message : "Premio eliminado con éxito.",
+              type    : "success"
+            })
+          }
           this.$delete(this.rewards, i)
-          console.log("Eliminado con éxito.")
         }
+      },
+      async destroyBatch() {
+        const { selectedRows } = this.$refs.Rewards
+        try {
+          const action           = await this.$confirm(`¿Eliminar ${selectedRows.length} premios?`, "Advertencia", { type: "warning" })
+          if ( action ) {
+            selectedRows.forEach( async row => {
+              await this.destroy( row.objectId, "batch" )
+            } )
+          }
+        } catch ( ex ) {
+          if ( ex == "batch" ) {
+            this.$message({
+              duration: 4000,
+              message : "Ocurrió un error al eliminar los premios.",
+              type    : "error"
+            })
+          }
+          return
+        }
+        this.$message({
+          duration: 4000,
+          message : "Premios eliminados con éxito.",
+          type    : "success"
+        })
+      },
+      handleRowClick( params ) {
+        this.selectedRow = params.row.objectId
+        this.showEditRewardForm = true
       },
       handleNewRewardSaved( savedReward ) {
         const _savedReward = savedReward.toJSON()

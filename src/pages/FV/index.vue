@@ -3,83 +3,37 @@
     <div class="jumbotron jumbotron-fluid bg-info">
       <div class="container text-white">
         <h1 class="display-4 font-weight-bolder">Fuerza de Venta</h1>
-        <p class="lead">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Praesentium rem est cupiditate in qui exercitationem. Consequuntur eum aut corporis sint eius mollitia voluptate repellendus, ex dolor veritatis id. Voluptates, ipsa.</p>
+        <p class="lead">Listado general de usuarios en Fuerza de Venta</p>
       </div>
     </div>
     <div class="container">
       <div class="row mb-3">
         <div class="col-12">
           <button class="btn btn-info float-right"
-            v-on:click="showCreateFVForm = !showCreateFVForm">Nuevo usuario</button>
-        </div>
-        <div class="col-12">
-          <create-fv-form v-if="showCreateFVForm"
-            v-on:new-fv-saved="handleNewFVSaved"/>
+            v-on:click="showCreateFVForm = true">Nuevo usuario</button>
         </div>
       </div>
       <div class="row">
+        <create-fv-form v-on:new-fv-saved="handleNewFVSaved"
+          v-show="showCreateFVForm"
+          v-model="showCreateFVForm"/>
+        <edit-fv-form :user-to-edit="userToEdit"
+          v-if="showEditFVForm"
+          v-on:fv-updated="handleFVUpdated"
+          v-model="showEditFVForm"/>
         <div class="col-12">
-          <div class="table-responsive">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th colspan="4"></th>
-                  <th colspan="3" class="text-center">Preguntas</th>
-                  <th></th>
-                  <th></th>
-                </tr>
-                <tr>
-                  <th scope="col">Fecha</th>
-                  <th scope="col">Nombre</th>
-                  <th scope="col">Ciudad</th>
-                  <th scope="col">Puntos</th>
-                  <th scope="col">Resueltas</th>
-                  <th scope="col" class="text-success">Acertadas</th>
-                  <th scope="col" class="text-danger">Perdidas</th>
-                  <th scope="col" class="text-info">Recompensas</th>
-                  <th scope="col">Acciones</th>
-                </tr>
-              </thead>
-              <transition-group name="fade" mode="out-in">
-                <tbody v-for="user in users"
-                    :key="user.objectId">
-                  <tr>
-                    <td>
-                      <small>{{ user.createdAt | date }}</small>
-                    </td>
-                    <td>{{ user.name }}</td>
-                    <td>{{ user.city.name }}</td>
-                    <td>{{ user.points }}</td>
-                    <td>{{ user.total > 0 ? user.total : "--" }}</td>
-                    <td>{{ user.wins > 0 ? user.wins : "--" }}</td>
-                    <td>{{ user.losses > 0 ? user.losses : "--" }}</td>
-                    <td>{{ user.claims > 0 ? user.claims : "--" }}</td>
-                    <td>
-                      <div class="btn-toolbar" role="toolbar">
-                        <div class="btn-group" role="group">
-                          <button type="button"
-                            class="btn"
-                            v-on:click="edit(user.objectId)">
-                            <feather type="edit-3"/>
-                          </button>
-                          <button type="button"
-                            class="btn text-danger"
-                            v-on:click="destroy(user.objectId)">
-                            <feather type="trash-2"/>
-                          </button>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr v-if="selectedRow == user.objectId">
-                    <td colspan="8">
-                      <edit-fv-form :user-to-edit="userToEdit" v-on:fv-updated="handleFVUpdated"/>
-                    </td>
-                  </tr>
-                </tbody>
-              </transition-group>
-            </table>
-          </div>
+          <vue-good-table :rows="users"
+            ref="FV"
+            styleClass="vgt-table striped condensed"
+            v-on:on-cell-click="handleRowClick"
+            :columns="columns"
+            :pagination-options="paginationOptions"
+            :search-options="searchOptions"
+            :select-options="selectOptions">
+            <div slot="selected-row-actions">
+              <button class="btn btn-danger btn-sm" v-on:click="destroyBatch">Eliminar</button>
+            </div>
+          </vue-good-table>
         </div>
       </div>
     </div>
@@ -90,19 +44,58 @@
   import CreateFvForm from "@/components/forms/create-fv-form"
   import EditFvForm from "@/components/forms/edit-fv-form"
   import replies from "@/mixins/replies"
+  import VueGoodTableProps from "@/mixins/vue-good-table-props"
   export default {
     components: {
       EditFvForm,
       CreateFvForm
     },
     mixins: [
-      replies
+      replies,
+      VueGoodTableProps
     ],
     data() {
       return {
+        columns: [{
+          label   : "Fecha",
+          field   : "createdAt",
+          formatFn: this.formatDate
+        }, {
+          label: "Nombre",
+          field: "name"
+        }, {
+          label: "Ciudad",
+          field: "city.name"
+        }, {
+          label   : "Puntos",
+          field   : "points",
+          formatFn: this.formatQuantity,
+          sortable: false
+        }, {
+          label   : "Resueltas",
+          field   : "total",
+          formatFn: this.formatQuantity,
+          sortable: false
+        }, {
+          label   : "Perdidas",
+          field   : "losses",
+          formatFn: this.formatQuantity,
+          sortable: false
+        }, {
+          label   : "Acertadas",
+          field   : "wins",
+          formatFn: this.formatQuantity,
+          sortable: false
+        }, {
+          label   : "Recompensas",
+          field   : "claims",
+          formatFn: this.formatQuantity,
+          sortable: false
+        }],
         users: [],
         selectedRow: null,
-        showCreateFVForm: false
+        showCreateFVForm: false,
+        showEditFVForm: false
       }
     },
     computed: {
@@ -124,45 +117,41 @@
           query.descending( "createdAt" )
           users = await query.find()
         } catch ( ex ) {
-          return console.error( ex )
+          return this.$message({
+            duration: 4000,
+            message : "Ocurrió un error al descargar los usuarios.",
+            type    : "error"
+          })
         }
         users.forEach(async user => {
           const _user = user.toJSON()
           const { objectId, createdAt, name, city, points } = _user
-
           // User Parse Object
           const User         = this.$parse.createObject( "User" )
           const UserInstance = new User()
           UserInstance.set( "objectId", objectId )
-
           // Recompensas
           const ClaimsQuery  = this.$parse.createQuery( "Claims" )
           ClaimsQuery.equalTo( "user", UserInstance )
           const _claims = await ClaimsQuery.count()
-
           // Respuestas
           const RepliesQuery = this.$parse.createQuery( "Reply" )
           RepliesQuery.equalTo( "user", UserInstance )
           const _replies = await RepliesQuery.find()
-          
           let wins = 0
           let losses = 0
           _replies.forEach( reply => {
             const _reply = reply.toJSON()
-
             if ( _reply.valid ) wins++
             else losses++
-
           } )
-          
-
           this.users.push({
             createdAt,
             name,
             objectId,
             city: {
-              name: city ? city.name : _user.username,
-              id  : city ? city.objectId : "No objectID"
+              name: city ? city.name    : _user.username,
+              id  : city ? city.objectId: "No objectId"
             },
             points,
             claims: _claims,
@@ -172,19 +161,63 @@
           })
         })
       },
-      async edit( objectId ) {
-        if ( this.selectedRow == objectId ) return this.selectedRow = null
-        this.selectedRow = objectId
-      },
-      async destroy( objectId ) {
+      async destroy( objectId, batch = false ) {
         const i = this.users.findIndex(x => x.objectId == objectId)
-        const action = confirm(`¿Eliminar usuario "${ this.users[i].name }"?`)
-        if ( action ) {
+        let action
+        if ( !batch ) {
+          action = await this.$confirm( `¿Eliminar usuario "${ this.users[i].name }"?`, "Advertencia", { type: "warning" } )
+        }
+        if ( !action && batch || action ) {
           const query = this.$parse.createQuery("User")
-          const user = await query.get(objectId)
-          await user.destroy({ useMasterKey: true })
+          const user  = await query.get(objectId)
+          try {
+            await user.destroy({ useMasterKey: true })
+          } catch ( ex ) {
+            if ( batch ) throw "batch"
+            return this.$message({
+              duration: 4000,
+              message : "Ocurrió un error al eliminar el usuario.",
+              type    : "error"
+            })
+          }
+          if ( !batch ) {
+            this.$message({
+              duration: 4000,
+              message : "Usuario eliminado con éxito.",
+              type    : "success"
+            })
+          }
           this.$delete(this.users, i)
         }
+      },
+      async destroyBatch() {
+        const { selectedRows } = this.$refs.FV
+        try {
+          const action           = await this.$confirm(`¿Eliminar ${selectedRows.length} usuarios?`, "Advertencia", { type: "warning" })
+          if ( action ) {
+            selectedRows.forEach( async row => {
+              await this.destroy( row.objectId, "batch" )
+            } )
+          }
+        } catch ( ex ) {
+          if ( ex == "batch" ) {
+            this.$message({
+              duration: 4000,
+              message : "Ocurrió un error al eliminar los usuarios.",
+              type    : "error"
+            })
+          }
+          return
+        }
+        this.$message({
+          duration: 4000,
+          message : "Usuarios eliminados con éxito.",
+          type    : "success"
+        })
+      },
+      handleRowClick( params ) {
+        this.selectedRow = params.row.objectId
+        this.showEditFVForm = true
       },
       handleNewFVSaved( savedFV ) {
         const _savedFV = savedFV.toJSON()
@@ -203,9 +236,7 @@
       handleFVUpdated( updatedFV ) {
         const _updatedFV = updatedFV.toJSON()
         const { objectId, createdAt, name, city, points } = _updatedFV
-        
         const index = this.users.findIndex( x => x.objectId == objectId )
-
         if ( index > -1 ) {
           this.$set( this.users, index, {
             createdAt,
