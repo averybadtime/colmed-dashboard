@@ -1,8 +1,10 @@
 <template>
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-
-    <settings-dialog v-if="showSettingsDialog" v-model="showSettingsDialog"/>
-
+    <settings-dialog v-if="showSettingsDialog"
+      v-model="showSettingsDialog"/>
+    <user-settings-dialog v-if="showUserSettingsDialog"
+      v-model="showUserSettingsDialog"
+      v-on:username-updated="handleUsernameUpdated"/>
     <button class="navbar-toggler"
       type="button"
       data-toggle="collapse"
@@ -12,7 +14,7 @@
       aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
-    <a class="navbar-brand" href="#">Colmed</a>
+    <router-link class="navbar-brand" to="/">Colmed</router-link>
     <div class="collapse navbar-collapse" id="navbar">
       <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
         <li v-for="(item, index) in menu"
@@ -25,20 +27,15 @@
       </ul>
     </div>
     <div class="form-inline my-2 my-lg-0">
-      
       <div class="dropdown">
-        <button class="btn btn-link text-white dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          {{ authUserName }}
+        <button class="btn btn-link text-white dropdown-toggle" type="button" id="authMenu" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          {{ authUsernameComputed }}
         </button>
-        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-          <a class="dropdown-item" href="#">Editar perfil</a>
-
+        <div class="dropdown-menu" aria-labelledby="authMenu">
+          <a class="dropdown-item" v-on:click.prevent="showUserSettingsDialog = true">Editar perfil</a>
           <a class="dropdown-item" v-on:click.prevent="showSettingsDialog = true">Ajustes del sistema</a>
-          
-
           <div class="dropdown-divider"></div>
-
-          <a class="dropdown-item" href="#">Cerrar sesión</a>
+          <a class="dropdown-item" v-on:click.prevent="signOut">Cerrar sesión</a>
         </div>
       </div>
     </div>
@@ -47,12 +44,15 @@
 
 <script>
   import SettingsDialog from "@/components/dialogs/Settings"
+  import UserSettingsDialog from "@/components/dialogs/UserSettings"
   export default {
     components: {
-      SettingsDialog
+      SettingsDialog,
+      UserSettingsDialog
     },
     data() {
       return {
+        authUsername: null,
         menu:[{
           label: "Fuerza de Venta",
           to: "/fuerza-de-venta"
@@ -69,24 +69,38 @@
           label: "Clientes",
           to: "/clientes"
         }],
-        showSettingsDialog: false
+        showSettingsDialog: false,
+        showUserSettingsDialog: false
       }
     },
     computed: {
-      authUserName() {
-        return this.$parse.User.current().get( "username" )
+      authUsernameComputed() {
+        return this.authUsername
       }
     },
     methods: {
+      getUsername() {
+        return this.$parse.User.current().get( "username" )
+      },
+      handleUsernameUpdated( newUsername ) {
+        this.authUsername = this.getUsername()
+      },
       async signOut() {
         try {
           await this.$parse.User.logOut()
         } catch ( ex ) {
-          return console.error("Ocurrió un error al cerrar sesión. Intente nuevamente.")
+          return this.$message({
+            duration: 4000,
+            message : "Ocurrió un error al cerrar sesión. Intente nuevamente.",
+            type    : "error"
+          })
         }
         this.$store.commit("SET_USER", null)
         this.$router.replace("/login")
-      }
+      },
+    },
+    created() {
+      this.authUsername = this.getUsername()
     }
   }
 </script>
