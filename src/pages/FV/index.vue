@@ -145,20 +145,22 @@
             if ( _reply.valid ) wins++
             else losses++
           } )
-          this.users.push({
-            createdAt,
-            name,
-            objectId,
-            city: {
-              name: city ? city.name    : _user.username,
-              id  : city ? city.objectId: "No objectId"
-            },
-            points,
-            claims: _claims,
-            total: _replies.length,
-            wins,
-            losses
-          })
+          if ( _replies && _replies.length > 0 ) {
+            this.users.push({
+              createdAt,
+              name,
+              objectId,
+              city: {
+                name: city ? city.name    : _user.username,
+                id  : city ? city.objectId: "No objectId"
+              },
+              points,
+              claims: _claims,
+              total: _replies.length,
+              wins,
+              losses
+            })
+          }
         })
       },
       async destroy( objectId, batch = false ) {

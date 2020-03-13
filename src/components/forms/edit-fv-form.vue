@@ -35,6 +35,29 @@
         </div>
       </form>
     </fieldset>
+    <fieldset v-if="user.total && user.total > 0">
+      <legend>Repuestas (Solo lectura)</legend>
+      <div class="row">
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Pregunta</th>
+                <th>Respuesta</th>
+                <th>Válida</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Hola</td>
+                <td>Cómo</td>
+                <td>Estás?</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </fieldset>
     <span slot="footer" class="dialog-footer">
       <button class="btn" v-on:click="closeDialog">Cancelar</button>
       <button class="btn btn-info" v-on:click="update">Guardar cambios</button>
@@ -54,7 +77,8 @@
     ],
     data() {
       return {
-        user: {}
+        user: {},
+        replies: []
       }
     },
     computed: {
@@ -107,11 +131,42 @@
       },
       closeDialog() {
         this.visible = false
+      },
+      async getQuestionsAndAnswers() {
+
+        const User = this.$parse.createObject( "User" )
+        const UserInstance = new User()
+        UserInstance.set( "objectId", this.user.objectId )
+
+        const RepliesQuery = this.$parse.createQuery( "Reply" )
+        RepliesQuery.equalTo( "user", UserInstance )
+        const Replies = await RepliesQuery.find()
+
+        Replies.forEach( Reply => {
+
+          const _Reply = Reply.toJSON()
+          const { question, answer, valid } = _Reply
+          this.replies.push({
+            question: question.get("objectId"),
+            answer: answer.get("objectId"),
+            valid: true
+          })
+
+        } )
+
+        try {
+
+        } catch ( ex ) {
+          console.error( ex )
+        }
       }
     },
     created() {
       Object.assign( this.user, this.userToEdit )
       this.getCities()
+      if ( this.user.total && this.user.total > 0 ) {
+        this.getQuestionsAndAnswers()
+      }
     }
   }
 </script>
