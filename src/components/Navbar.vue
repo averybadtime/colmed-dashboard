@@ -1,5 +1,8 @@
 <template>
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+
+    <settings-dialog v-if="showSettingsDialog" v-model="showSettingsDialog"/>
+
     <button class="navbar-toggler"
       type="button"
       data-toggle="collapse"
@@ -21,18 +24,33 @@
         </li>
       </ul>
     </div>
-    <form class="form-inline my-2 my-lg-0"
-      v-on:submit.prevent="signOut">
-      <button class="btn btn-outline-info text-white my-2 my-sm-0"
-        type="submit">
-        Cerrar sesión
-      </button>
-    </form>
+    <div class="form-inline my-2 my-lg-0">
+      
+      <div class="dropdown">
+        <button class="btn btn-link text-white dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          {{ authUserName }}
+        </button>
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+          <a class="dropdown-item" href="#">Editar perfil</a>
+
+          <a class="dropdown-item" v-on:click.prevent="showSettingsDialog = true">Ajustes del sistema</a>
+          
+
+          <div class="dropdown-divider"></div>
+
+          <a class="dropdown-item" href="#">Cerrar sesión</a>
+        </div>
+      </div>
+    </div>
   </nav>
 </template>
 
 <script>
+  import SettingsDialog from "@/components/dialogs/Settings"
   export default {
+    components: {
+      SettingsDialog
+    },
     data() {
       return {
         menu:[{
@@ -50,7 +68,13 @@
         }, {
           label: "Clientes",
           to: "/clientes"
-        }]
+        }],
+        showSettingsDialog: false
+      }
+    },
+    computed: {
+      authUserName() {
+        return this.$parse.User.current().get( "username" )
       }
     },
     methods: {
