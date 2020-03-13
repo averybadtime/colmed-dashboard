@@ -6,7 +6,7 @@
       <legend>Información de pregunta</legend>
       <form>
         <div class="row">
-          <div class="col-12">
+          <div class="col-6">
             <div class="form-group">
               <label for="name">Pregunta</label>
               <input type="text"
@@ -15,6 +15,22 @@
                 id="text"
                 class="form-control"
                 v-model="question.text">
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="form-group">
+              <label for="name">Categoría</label>
+              <select id="medicine"
+                name="medicine"
+                class="form-control"
+                v-model="question.medicine">
+                <option :value="undefined" disabled>--- Seleccione categoría ---</option>
+                <option v-for="medicine in medicines"
+                  :key="medicine.objectId"
+                  :value="medicine.objectId">
+                  {{ medicine.name }}
+                </option>
+              </select>
             </div>
           </div>
           <div class="col-12 col-md-6">
@@ -35,7 +51,7 @@
                 id="active"
                 class="form-control"
                 v-model="question.active">
-                <option :value="null" disabled>--- Seleccione el estado ---</option>
+                <option :value="undefined" disabled>--- Seleccione el estado ---</option>
                 <option :value="true">Activo</option>
                 <option :value="false">Inactivo</option>
               </select>
@@ -91,7 +107,11 @@
 </template>
 
 <script>
+  import medicines from "@/mixins/medicines"
   export default {
+    mixins: [
+      medicines
+    ],
     props: {
       value: Boolean
     },
@@ -115,19 +135,24 @@
     },
     methods: {
       async save() {
-        const { answers, text, points, active, rightAnswer } = this.question
+        const { answers, text, points, active, rightAnswer, medicine } = this.question
         if (
           text && text.trim() != "" &&
           points && points.toString().trim() != "" &&
           active != undefined &&
           answers && answers.length > 0 &&
-          rightAnswer != undefined && text.toString().trim() != ""
+          rightAnswer != undefined && text.toString().trim() != "" &&
+          medicine && medicine.toString() != ""
         ) {
           const Question = this.$parse.createObject( "Question" )
           const instance = new Question()
           instance.set( "text", text )
           instance.set( "points", points )
           instance.set( "active", active )
+          const Medicine = this.$parse.createObject( "Medicine" )
+          const MedicineInstance = new Medicine()
+          MedicineInstance.set( "objectId", medicine )
+          instance.set( "medicine", MedicineInstance )
           let savedQuestion
           try {
             savedQuestion = await instance.save()

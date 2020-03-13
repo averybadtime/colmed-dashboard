@@ -129,13 +129,14 @@
         }
         materials.forEach(material => {
           const _material = material.toJSON()
-          const { objectId, createdAt, name, description, active, image, file } = _material
+          const { objectId, createdAt, name, description, active, image, file, medicine } = _material
           this.materials.push({
             createdAt,
             name,
             objectId,
             description,
             active,
+            medicine: medicine ? medicine.objectId : null,
             imageURL: image ? image.url : null,
             fileURL: file ? file.url : null
           })
@@ -201,13 +202,14 @@
       },
       handleNewMaterialSaved( savedMaterial ) {
         const _savedMaterial = savedMaterial.toJSON()
-        const { objectId, createdAt, name, description, active, image, file } = _savedMaterial
+        const { objectId, createdAt, name, description, active, image, file, medicine } = _savedMaterial
         this.materials.push({
           createdAt,
           name,
           objectId,
           description,
           active,
+          medicine: medicine ? medicine.objectId : null,
           imageURL: image ? image.url : null,
           fileURL: file ? file.url : null
         })
@@ -215,7 +217,7 @@
       },
       handleMaterialUpdated( updatedMaterial ) {
         const _updatedMaterial = updatedMaterial.toJSON()
-        const { objectId, createdAt, name, description, active, image, file } = _updatedMaterial
+        const { objectId, createdAt, name, description, active, image, file, medicine } = _updatedMaterial
         const index = this.materials.findIndex(x => x.objectId == _updatedMaterial.objectId)
         this.$set(this.materials, index, {
           createdAt,
@@ -223,6 +225,7 @@
           objectId,
           description,
           active,
+          medicine: medicine ? medicine.objectId : null,
           imageURL: image ? image.url : null,
           fileURL: file ? file.url : null
         })

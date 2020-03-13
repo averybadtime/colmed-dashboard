@@ -103,7 +103,7 @@
         }
         questions.forEach( async question => {
           const _question = question.toJSON()
-          const { objectId, createdAt, text, active, points  } = _question
+          const { objectId, createdAt, text, active, points, medicine  } = _question
           const answersCount = await this.getAnswersCount( objectId )
           this.questions.push({
             createdAt,
@@ -111,7 +111,8 @@
             objectId,
             active,
             points,
-            answersCount
+            answersCount,
+            medicine: medicine ? medicine.objectId : null
           })
         } )
       },
@@ -188,7 +189,7 @@
       },
       async handleNewQuestionForm( savedQuestion ) {
         const _savedQuestion = savedQuestion.toJSON()
-        const { objectId, createdAt, text, active, points  } = _savedQuestion
+        const { objectId, createdAt, text, active, points, medicine  } = _savedQuestion
         const answersCount = await this.getAnswersCount( objectId )
         this.questions.push({
           createdAt,
@@ -196,12 +197,13 @@
           objectId,
           active,
           points,
-          answersCount
+          answersCount,
+          medicine: medicine ? medicine.objectId : null
         })
       },
       async handleQuestionUpdated( updatedQuestion ) {
         const _updatedQuestion = updatedQuestion.toJSON()
-        const { objectId, createdAt, text, active, points  } = _updatedQuestion
+        const { objectId, createdAt, text, active, points, medicine  } = _updatedQuestion
         const index = this.questions.findIndex(x => x.objectId == _updatedQuestion.objectId)
         const answersCount = await this.getAnswersCount( objectId )
         this.$set(this.questions, index, {
@@ -210,7 +212,8 @@
           objectId,
           active,
           points,
-          answersCount
+          answersCount,
+          medicine: medicine ? medicine.objectId : null
         })
         this.selectedRow = null
       }

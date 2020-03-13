@@ -6,7 +6,7 @@
       <legend>Información de pregunta</legend>
       <form v-on:submit.prevent="update">
         <div class="row">
-          <div class="col-12">
+          <div class="col-6">
             <div class="form-group">
               <label for="name">Pregunta</label>
               <input type="text"
@@ -15,6 +15,22 @@
                 id="text"
                 class="form-control"
                 v-model="question.text">
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="form-group">
+              <label for="name">Categoría</label>
+              <select id="medicine"
+                name="medicine"
+                class="form-control"
+                v-model="question.medicine">
+                <option :value="undefined" disabled>--- Seleccione categoría ---</option>
+                <option v-for="medicine in medicines"
+                  :key="medicine.objectId"
+                  :value="medicine.objectId">
+                  {{ medicine.name }}
+                </option>
+              </select>
             </div>
           </div>
           <div class="col-12 col-md-6">
@@ -35,7 +51,7 @@
                 id="active"
                 class="form-control"
                 v-model="question.active">
-                <option :value="null" disabled>--- Seleccione el estado ---</option>
+                <option :value="undefined" disabled>--- Seleccione el estado ---</option>
                 <option :value="true">Activo</option>
                 <option :value="false">Inactivo</option>
               </select>
@@ -92,7 +108,11 @@
 </template>
 
 <script>
+  import medicines from "@/mixins/medicines"
   export default {
+    mixins: [
+      medicines
+    ],
     props: {
       questionToEdit: Object,
       value         : Boolean
@@ -117,19 +137,24 @@
     },
     methods: {
       async update() {
-        const { objectId, text, points, active, answers, rightAnswer } = this.question
+        const { objectId, text, points, active, answers, rightAnswer, medicine } = this.question
         if (
           text && text.trim() != "" &&
           points && points.toString().trim() != "" &&
           rightAnswer != undefined && text.toString().trim() != "" &&
           answers && answers.length > 1 &&
-          active != undefined
+          active != undefined &&
+          medicine && medicine.toString() != ""
         ) {
           const QuestionQuery = this.$parse.createQuery( "Question" )
           const Question = await QuestionQuery.get( objectId )
           Question.set( "text", text )
           Question.set( "points", points )
           Question.set( "active", active )
+          const Medicine = this.$parse.createObject( "Medicine" )
+          const MedicineInstance = new Medicine()
+          MedicineInstance.set( "objectId", medicine )
+          Question.set( "medicine", MedicineInstance )
           try {
             const updatedQuestion = await Question.save()
             answers.forEach(async ( answer, index ) => {
