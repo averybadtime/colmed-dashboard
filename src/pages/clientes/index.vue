@@ -23,7 +23,7 @@
           v-model="showEditClientForm"/>
         <div class="col-12">
           <vue-good-table :rows="clients"
-            ref="FV"
+            ref="Clients"
             styleClass="vgt-table striped condensed"
             v-on:on-cell-click="handleRowClick"
             :columns="columns"
@@ -150,7 +150,7 @@
         }
       },
       async destroyBatch() {
-        const { selectedRows } = this.$refs.FV
+        const { selectedRows } = this.$refs.Clients
         try {
           const action           = await this.$confirm(`¿Eliminar ${selectedRows.length} clientes?`, "Advertencia", { type: "warning" })
           if ( action ) {
