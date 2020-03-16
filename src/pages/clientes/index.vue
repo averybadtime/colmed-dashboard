@@ -22,7 +22,7 @@
           v-on:client-updated="handleClientUpdated"
           v-model="showEditClientForm"/>
         <div class="col-12">
-          <vue-good-table :rows="clients"
+          <!-- <vue-good-table :rows="clients"
             ref="Clients"
             styleClass="vgt-table striped condensed"
             v-on:on-cell-click="handleRowClick"
@@ -30,6 +30,22 @@
             :pagination-options="paginationOptions"
             :search-options="searchOptions"
             :select-options="selectOptions">
+            <div slot="selected-row-actions">
+              <button class="btn btn-danger btn-sm" v-on:click="destroyBatch">Eliminar</button>
+            </div>
+          </vue-good-table> -->
+          <vue-good-table :rows="clients"
+            mode="remote"
+            ref="Clients"
+            styleClass="vgt-table striped condensed"
+            v-on:on-cell-click="handleRowClick"
+            :columns="columns"
+            :pagination-options="{ enabled: true, perPage: 100 }"
+            :select-options="selectOptions"
+            :is-loading="isLoading"
+            :total-rows="totalRows"
+            v-on:on-page-change="handlePageChange"
+            v-on:on-sort-change="handleSortChange">
             <div slot="selected-row-actions">
               <button class="btn btn-danger btn-sm" v-on:click="destroyBatch">Eliminar</button>
             </div>
@@ -75,7 +91,12 @@
         clients: [],
         selectedRow: null,
         showCreateClientForm: false,
-        showEditClientForm: false
+        showEditClientForm: false,
+        rowsPerPage: 100,
+        currentPage: 1,
+        isLoading: true,
+        totalRows: 0,
+        sortOptions: null
       }
     },
     computed: {
@@ -88,12 +109,29 @@
       }
     },
     methods: {
-      async getClients() {
+      async getClients( firstPage = true ) {
         let clients
+        this.clients = []
         try {
+          this.isLoading = true
+          const limitQuery = this.$parse.createQuery( "Client" )
+          const _totalRows = await limitQuery.count()
+          this.totalRows = _totalRows
           const query = this.$parse.createQuery( "Client" )
-          query.descending( "createdAt" )
-          query.limit(5000)
+          query.limit(this.rowsPerPage)
+          if ( !firstPage ) {
+            query.skip( this.currentPage * this.rowsPerPage )
+          }
+          if ( this.sortOptions ) {
+            const { field } = this.sortOptions
+            if ( this.sortOptions.type == "asc" ) {
+              query.ascending( field )
+            } else {
+              query.descending( field )
+            }
+          } else {
+            query.descending( "createdAt" )
+          }
           clients = await query.find()
         } catch ( ex ) {
           return this.$message({
@@ -101,6 +139,8 @@
             message : "Ocurrió un error al descargar los clientes.",
             type    : "error"
           })
+        } finally {
+          this.isLoading = false
         }
         clients.forEach(client => {
           const _client = client.toJSON()
@@ -177,6 +217,28 @@
       handleRowClick( params ) {
         this.selectedRow = params.row.objectId
         this.showEditClientForm = true
+      },
+      async handlePageChange( params ) {
+        const { currentPage } = params
+        this.currentPage = currentPage
+        const firstPage = currentPage == 1 ? true : false
+        await this.getClients( firstPage )
+      },
+      async handleSortChange( params ) {
+
+
+        const { field, type } = params[params.length - 1]
+
+        if ( type == "asc" ) {
+          this.clients = this.clients.sort( ( a, b ) => ( a[field] > b[field] ) ? 1 : -1 )
+        } else if ( type == "desc" ) {
+          this.clients = this.clients.sort( ( a, b ) => ( a[field] > b[field] ) ? -1 : 1 )
+        }
+
+
+        // this.sortOptions = { field, type }
+        // const firstPage = this.currentPage == 1 ? true : false
+        // await this.getClients( firstPage )
       },
       handleNewClientSaved( savedClient ) {
         const _savedClient = savedClient.toJSON()
