@@ -3,7 +3,7 @@
     <div class="jumbotron jumbotron-fluid bg-info">
       <div class="container text-white">
         <h1 class="display-4 font-weight-bolder">Clientes</h1>
-        <p class="lead">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Praesentium rem est cupiditate in qui exercitationem. Consequuntur eum aut corporis sint eius mollitia voluptate repellendus, ex dolor veritatis id. Voluptates, ipsa.</p>
+        <p class="lead">Listado general de todos los clientes</p>
       </div>
     </div>
     <div class="container">
@@ -12,57 +12,28 @@
           <button class="btn btn-info float-right"
             v-on:click="showCreateClientForm = !showCreateClientForm">Nuevo cliente</button>
         </div>
-        <div class="col-12">
-          <create-client-form v-if="showCreateClientForm"
-            v-on:new-client-saved="handleNewClientSaved"/>
-        </div>
       </div>
       <div class="row">
+        <create-client-form v-on:new-client-saved="handleNewClientSaved"
+          v-show="showCreateClientForm"
+          v-model="showCreateClientForm"/>
+        <edit-client-form :client-to-edit="clientToEdit"
+          v-if="showEditClientForm"
+          v-on:client-updated="handleClientUpdated"
+          v-model="showEditClientForm"/>
         <div class="col-12">
-          <div class="table-responsive">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th scope="col">Nombre</th>
-                  <th scope="col">Cargo</th>
-                  <th scope="col">Cédula</th>
-                  <th scope="col">Código</th>
-                  <th scope="col">Acciones</th>
-                </tr>
-              </thead>
-              <transition-group name="fade" mode="out-in">
-                <tbody v-for="client in clients"
-                  :key="client.objectId">
-                  <tr>
-                    <td>{{ client.name }}</td>
-                    <td>{{ client.position }}</td>
-                    <td>{{ client.document }}</td>
-                    <td>{{ client.code }}</td>
-                    <td>
-                      <div class="btn-toolbar" role="toolbar">
-                        <div class="btn-group" role="group">
-                          <button type="button" class="btn"
-                            v-on:click="edit(client.objectId)">
-                            <feather type="edit-3"/>
-                          </button>
-                          <button type="button" class="btn text-danger"
-                            v-on:click="destroy(client.objectId)">
-                            <feather type="trash-2"/>
-                          </button>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr v-if="selectedRow == client.objectId">
-                    <td colspan="8">
-                      <edit-client-form :client-to-edit="clientToEdit"
-                        v-on:client-updated="handleClientUpdated"/>
-                    </td>
-                  </tr>
-                </tbody>
-              </transition-group>
-            </table>
-          </div>
+          <vue-good-table :rows="clients"
+            ref="FV"
+            styleClass="vgt-table striped condensed"
+            v-on:on-cell-click="handleRowClick"
+            :columns="columns"
+            :pagination-options="paginationOptions"
+            :search-options="searchOptions"
+            :select-options="selectOptions">
+            <div slot="selected-row-actions">
+              <button class="btn btn-danger btn-sm" v-on:click="destroyBatch">Eliminar</button>
+            </div>
+          </vue-good-table>
         </div>
       </div>
     </div>
@@ -72,16 +43,39 @@
 <script>
   import CreateClientForm from "@/components/forms/create-client-form"
   import EditClientForm from "@/components/forms/edit-client-form"
+  import VueGoodTableProps from "@/mixins/vue-good-table-props"
   export default {
     components: {
       CreateClientForm,
       EditClientForm
     },
+    mixins :[
+      VueGoodTableProps
+    ],
     data() {
       return {
+        columns: [{
+          label: "Nombre",
+          field: "name"
+        }, {
+          label: "Empresa",
+          field: "company"
+        }, {
+          label   : "Cargo",
+          field   : "position",
+          sortable: false
+        }, {
+          label   : "Documento",
+          field   : "document",
+          sortable: false
+        }, {
+          label: "Código",
+          field: "code"
+        }],
         clients: [],
         selectedRow: null,
-        showCreateClientForm: false
+        showCreateClientForm: false,
+        showEditClientForm: false
       }
     },
     computed: {
@@ -99,9 +93,14 @@
         try {
           const query = this.$parse.createQuery( "Client" )
           query.descending( "createdAt" )
+          query.limit(5000)
           clients = await query.find()
         } catch ( ex ) {
-          return console.error(ex)
+          return this.$message({
+            duration: 3000,
+            message : "Ocurrió un error al descargar los clientes.",
+            type    : "error"
+          })
         }
         clients.forEach(client => {
           const _client = client.toJSON()
@@ -121,16 +120,63 @@
         if ( this.selectedRow == objectId ) return this.selectedRow = null
         this.selectedRow = objectId
       },
-      async destroy(objectId) {
+      async destroy( objectId, batch = false ) {
         const i = this.clients.findIndex(x => x.objectId == objectId)
-        const action = confirm(`¿Eliminar cliente "${ this.clients[i].name }"?`)
-        if ( action ) {
-          const query = this.$parse.createQuery("Client")
-          const client = await query.get(objectId)
-          await client.destroy({ useMasterKey: true })
-          this.$delete(this.clients, i)
-          console.log("Eliminado con éxito.")
+        let action
+        if ( !batch ) {
+          action = await this.$confirm( `¿Eliminar cliente "${ this.clients[i].name }"?`, "Advertencia", { type: "warning" } )
         }
+        if ( !action && batch || action ) {
+          const query = this.$parse.createQuery("Client")
+          const client = await query.get( objectId )
+          try {
+            await client.destroy({ useMasterKey: true })
+          } catch ( ex ) {
+            if ( batch ) throw "batch"
+            return this.$message({
+              duration: 4000,
+              message : "Ocurrió un error al eliminar el cliente.",
+              type    : "error"
+            })
+          }
+          if ( !batch ) {
+            this.$message({
+              duration: 4000,
+              message : "Cliente eliminado con éxito.",
+              type    : "success"
+            })
+          }
+          this.$delete(this.clients, i)
+        }
+      },
+      async destroyBatch() {
+        const { selectedRows } = this.$refs.FV
+        try {
+          const action           = await this.$confirm(`¿Eliminar ${selectedRows.length} clientes?`, "Advertencia", { type: "warning" })
+          if ( action ) {
+            selectedRows.forEach( async row => {
+              await this.destroy( row.objectId, "batch" )
+            } )
+          }
+        } catch ( ex ) {
+          if ( ex == "batch" ) {
+            this.$message({
+              duration: 4000,
+              message : "Ocurrió un error al eliminar los clientes.",
+              type    : "error"
+            })
+          }
+          return
+        }
+        this.$message({
+          duration: 4000,
+          message : "Clientes eliminados con éxito.",
+          type    : "success"
+        })
+      },
+      handleRowClick( params ) {
+        this.selectedRow = params.row.objectId
+        this.showEditClientForm = true
       },
       handleNewClientSaved( savedClient ) {
         const _savedClient = savedClient.toJSON()
