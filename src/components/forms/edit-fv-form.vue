@@ -35,6 +35,30 @@
         </div>
       </form>
     </fieldset>
+    <fieldset v-if="user.total && user.total > 0">
+      <legend>Repuestas (Solo lectura)</legend>
+      <div class="row">
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Pregunta</th>
+                <th>Respuesta</th>
+                <th>Válida</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(reply, index) in replies"
+                :key="index">
+                <td>{{ reply.question }}</td>
+                <td>{{ reply.answer }}</td>
+                <td>{{ reply.valid }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </fieldset>
     <span slot="footer" class="dialog-footer">
       <button class="btn" v-on:click="closeDialog">Cancelar</button>
       <button class="btn btn-info" v-on:click="update">Guardar cambios</button>
@@ -54,7 +78,8 @@
     ],
     data() {
       return {
-        user: {}
+        user: {},
+        replies: []
       }
     },
     computed: {
@@ -107,11 +132,39 @@
       },
       closeDialog() {
         this.visible = false
+      },
+      async getQuestionsAndAnswers() {
+        const User = this.$parse.createObject( "User" )
+        const UserInstance = new User()
+        UserInstance.set( "objectId", this.user.objectId )
+        const RepliesQuery = this.$parse.createQuery( "Reply" )
+        RepliesQuery.equalTo( "user", UserInstance )
+        try {
+          const Replies = await RepliesQuery.find()
+          Replies.forEach( async Reply => {
+            const _Reply = Reply.toJSON()
+            const { question, answer, valid } = _Reply
+            const QuestionQuery               = this.$parse.createQuery( "Question" )
+            const _question                   = await QuestionQuery.get( question.objectId )
+            const AnswerQuery                 = this.$parse.createQuery( "Answer" )
+            const _answer                     = await AnswerQuery.get( answer.objectId )
+            this.replies.push({
+              question: _question ? _question.get( "text" ): "--",
+              answer  : _answer ? _answer.get( "text" )    : "--",
+              valid   : valid ? "Sí"                       : "No"
+            })
+          } )
+        } catch ( ex ) {
+          console.error( "Error obteniendo las 1 o más respuestas." )
+        }
       }
     },
     created() {
       Object.assign( this.user, this.userToEdit )
       this.getCities()
+      if ( this.user.total && this.user.total > 0 ) {
+        this.getQuestionsAndAnswers()
+      }
     }
   }
 </script>
