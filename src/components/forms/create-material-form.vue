@@ -133,6 +133,7 @@
           instance.set( "file", file )
           instance.set( "image", image )
           instance.set( "active", active )
+          instance.set( "createAt", new Date() )
           const Medicine = this.$parse.createObject( "Medicine" )
           const MedicineInstance = new Medicine()
           MedicineInstance.set( "objectId", medicine )
