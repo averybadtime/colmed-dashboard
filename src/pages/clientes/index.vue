@@ -225,20 +225,12 @@
         await this.getClients( firstPage )
       },
       async handleSortChange( params ) {
-
-
         const { field, type } = params[params.length - 1]
-
         if ( type == "asc" ) {
           this.clients = this.clients.sort( ( a, b ) => ( a[field] > b[field] ) ? 1 : -1 )
         } else if ( type == "desc" ) {
           this.clients = this.clients.sort( ( a, b ) => ( a[field] > b[field] ) ? -1 : 1 )
         }
-
-
-        // this.sortOptions = { field, type }
-        // const firstPage = this.currentPage == 1 ? true : false
-        // await this.getClients( firstPage )
       },
       handleNewClientSaved( savedClient ) {
         const _savedClient = savedClient.toJSON()

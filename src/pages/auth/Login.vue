@@ -50,21 +50,33 @@
         if (this.email.trim() != "" && this.password.trim() != "") {
           try {
             const user = await this.$parse.User.logIn(this.email, this.password)
+            if ( user.toJSON().rol != "admin" ) {
+              await this.$parse.User.logOut()
+              throw "UNAUTHORIZED"
+            }
             this.$store.commit("SET_USER", user)
             this.$router.replace("/")
           } catch (ex) {
-            console.error("Ocurrió un error al iniciar sesión. Intente nuevamente.")
-            console.error(ex)
+            let message
+            if ( ex == "UNAUTHORIZED" ) message = "No tiene permiso de ingresar al dashboard."
+            else message = "Ocurrió un error al iniciar sesión. Intente nuevamente."
+            this.$message({
+              duration: 4000,
+              message,
+              type: "error"
+            })
           }
         } else {
-          console.error("Asegúrese de rellenar todos los campos.")
-          console.error(ex)
+          this.$message({
+            duration: 4000,
+            message: "Asegúrese de rellenar todos los campos.",
+            type: "error"
+          })
         }
       }
     }
   }
 </script>
-
 <style scoped>
   figure {
     margin: 24px 0px 36px;
